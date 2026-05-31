@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch Bigfoot!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:100%;height:100%;
+    background:#1a3a0a;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    font-family:'Fredoka One',cursive;
+    overflow:hidden;
+    touch-action:none;
+  }
+  #hud{
+    position:fixed;top:0;left:0;right:0;
+    display:flex;align-items:center;justify-content:center;gap:24px;
+    padding:8px 20px;
+    background:linear-gradient(180deg,rgba(0,0,0,0.7) 0%,rgba(0,0,0,0) 100%);
+    color:#fff;font-size:1.1rem;z-index:10;pointer-events:none;
+  }
+  .hi{display:flex;align-items:center;gap:6px;
+    background:rgba(0,0,0,0.5);padding:4px 14px;border-radius:50px;
+    border:1.5px solid rgba(255,255,255,0.2);}
+  .hi span{color:#ffe44d;}
+  .tag-row{display:flex;gap:5px;}
+  .td{width:20px;height:20px;border-radius:50%;background:#444;border:2px solid #666;transition:all .3s;}
+  .td.on{background:#ff4444;border-color:#ff8888;box-shadow:0 0 8px #ff4444;}
+  #msgbar{
+    position:fixed;bottom:12px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,0.6);color:#ffe44d;
+    padding:6px 22px;border-radius:50px;font-size:1rem;
+    border:1.5px solid rgba(255,228,77,0.4);z-index:10;
+    white-space:nowrap;pointer-events:none;
+  }
+  canvas{display:block;cursor:pointer;}
+  #grab-btn{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#ff8c00,#ff5500);
+    color:#fff;font-family:'Fredoka One',cursive;font-size:1.4rem;
+    padding:16px 40px;border:none;border-radius:50px;cursor:pointer;
+    box-shadow:0 6px 28px rgba(255,100,0,.6);z-index:20;
+    display:none;
+    animation:pulse-btn .7s ease-in-out infinite alternate;
+    transition:transform .15s;
+    white-space:nowrap;
+  }
+  #grab-btn:active{transform:translate(-50%,-50%) scale(.93);}
+  @keyframes pulse-btn{from{box-shadow:0 4px 18px rgba(255,100,0,.5);}to{box-shadow:0 4px 28px rgba(255,160,0,.85);}}
+  /* ── ZOOM OVERLAY ── */
+  #grill-overlay{
+    position:fixed;inset:0;z-index:30;
+    background:#000;
+    display:none;align-items:center;justify-content:center;
+  }
+  #grill-overlay.active{display:flex;}
+  #grill-panel{
+    position:relative;
+    width:100vw;height:100vh;
+    background:linear-gradient(160deg,#2a1a08,#3a2a10);
+    border-radius:0;border:none;
+    box-shadow:none;
+    overflow:hidden;
+    user-select:none;
+  }
+  #grill-title{
+    text-align:center;font-family:'Fredoka One',cursive;
+    font-size:1.3rem;color:#ffe44d;padding:14px 0 4px;
+    text-shadow:0 2px 6px rgba(0,0,0,.5);
+  }
+  #grill-canvas{display:block;margin:0 auto;}
+  #grill-close{
+    position:absolute;top:10px;right:14px;
+    background:rgba(255,255,255,.15);border:none;border-radius:50%;
+    width:34px;height:34px;color:#fff;font-size:1.2rem;cursor:pointer;
+    font-family:sans-serif;line-height:34px;text-align:center;
+  }
+  #grill-close:hover{background:rgba(255,255,255,.3);}
+
+  /* ── COOLER OVERLAY ── */
+  #cooler-btn{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#2255cc,#1133aa);
+    color:#fff;font-family:'Fredoka One',cursive;font-size:1.4rem;
+    padding:16px 40px;border:none;border-radius:50px;cursor:pointer;
+    box-shadow:0 6px 28px rgba(30,80,220,.6);z-index:20;
+    display:none;
+    animation:pulse-btn .7s ease-in-out infinite alternate;
+    white-space:nowrap;
+  }
+  #cooler-overlay{
+    position:fixed;inset:0;z-index:30;
+    background:#000;
+    display:none;align-items:center;justify-content:center;
+  }
+  #cooler-overlay.active{display:flex;}
+  #cooler-panel{
+    position:relative;
+    width:100vw;height:100vh;
+    background:linear-gradient(160deg,#0a1a3a,#0e2248);
+    border-radius:0;border:none;
+    box-shadow:none;
+    overflow:hidden;user-select:none;
+  }
+  #cooler-title{text-align:center;font-family:'Fredoka One',cursive;
+    font-size:1.3rem;color:#88ccff;padding:14px 0 4px;
+    text-shadow:0 2px 6px rgba(0,0,0,.5);}
+  #cooler-canvas{display:block;margin:0 auto;}
+  #cooler-close{position:absolute;top:10px;right:14px;
+    background:rgba(255,255,255,.15);border:none;border-radius:50%;
+    width:34px;height:34px;color:#fff;font-size:1.2rem;cursor:pointer;
+    font-family:sans-serif;line-height:34px;text-align:center;}
+  #cooler-close:hover{background:rgba(255,255,255,.3);}
+  #cooler-hint{text-align:center;font-family:'Fredoka One',cursive;
+    font-size:.9rem;color:#88aacc;padding:4px 0 10px;}
+
+  /* ── TENT OVERLAY ── */
+  #tent-btn{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#c8a030,#a07820);
+    color:#fff;font-family:'Fredoka One',cursive;font-size:1.4rem;
+    padding:16px 40px;border:none;border-radius:50px;cursor:pointer;
+    box-shadow:0 6px 28px rgba(180,140,0,.6);z-index:20;
+    display:none;
+    animation:pulse-btn .7s ease-in-out infinite alternate;
+    white-space:nowrap;
+  }
+  #tent-overlay{
+    position:fixed;inset:0;z-index:30;
+    background:#000;
+    display:none;align-items:center;justify-content:center;
+  }
+  #tent-overlay.active{display:flex;}
+  #tent-panel{
+    position:relative;
+    width:100vw;height:100vh;
+    background:linear-gradient(160deg,#1a1008,#2a1e0c);
+    border-radius:0;border:none;
+    box-shadow:none;
+    overflow:hidden;user-select:none;
+  }
+  #tent-title{text-align:center;font-family:'Fredoka One',cursive;
+    font-size:1.3rem;color:#ffe44d;padding:14px 0 4px;
+    text-shadow:0 2px 6px rgba(0,0,0,.5);}
+  #tent-canvas{display:block;margin:0 auto;}
+  #tent-close{position:absolute;top:10px;right:14px;
+    background:rgba(255,255,255,.15);border:none;border-radius:50%;
+    width:34px;height:34px;color:#fff;font-size:1.2rem;cursor:pointer;
+    font-family:sans-serif;line-height:34px;text-align:center;}
+  #tent-close:hover{background:rgba(255,255,255,.3);}
+  #tent-hint{text-align:center;font-family:'Fredoka One',cursive;
+    font-size:.9rem;color:#c8a060;padding:4px 0 10px;}
+  #grill-hint{
+    text-align:center;font-family:'Fredoka One',cursive;
+    font-size:.9rem;color:#c8a060;padding:4px 0 10px;
+  }
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="hi">⏱ <span id="stimer">90</span>s</div>
+  <div class="hi">🧺 Stolen: <span id="sfood">0</span></div>
+  <div class="hi">🎒 Collected: <span id="scollected">0</span></div>
+  <div class="hi">🏃 Tags: <div class="tag-row"><div class="td" id="t1"></div><div class="td" id="t2"></div><div class="td" id="t3"></div></div></div>
+  <div class="hi">🌲 Level <span id="slevel">1</span></div>
+</div>
+<canvas id="c"></canvas>
+<div id="msgbar">Click or press Space to start!</div>
+<button id="grab-btn" onclick="openGrillOverlay()">🍖 Grab Food!</button>
+<button id="cooler-btn" onclick="openCoolerOverlay()">🧊 Open Cooler!</button>
+<button id="tent-btn" onclick="openTentOverlay()">⛺ Enter Tent!</button>
+
+<!-- COOLER OVERLAY -->
+<div id="cooler-overlay">
+  <div id="cooler-panel">
+    <div id="cooler-title">🧊 Grab snacks from the cooler!</div>
+    <button id="cooler-close" onclick="closeCoolerOverlay()">✕</button>
+    <canvas id="cooler-canvas"></canvas>
+    <div id="cooler-hint">Drag drinks & snacks 🧃🍎🥛 into your hand!</div>
+  </div>
+</div>
+
+<!-- TENT OVERLAY -->
+<div id="tent-overlay">
+  <div id="tent-panel">
+    <div id="tent-title">⛺ Inside the Tent</div>
+    <button id="tent-close" onclick="closeTentOverlay()">✕</button>
+    <canvas id="tent-canvas"></canvas>
+    <div id="tent-hint">Click the bed to rest 😴 or the chair to sit 🪑</div>
+  </div>
+</div>
+
+<!-- GRILL ZOOM OVERLAY -->
+<div id="grill-overlay" id="grill-overlay">
+  <div id="grill-panel">
+    <div id="grill-title">🔥 Grab the food before Bigfoot does!</div>
+    <button id="grill-close" onclick="closeGrillOverlay()">✕</button>
+    <canvas id="grill-canvas"></canvas>
+    <div id="grill-hint">Drag food items 🍖🌽🍗 into the backpack 🎒</div>
+  </div>
+</div>
+
+<script>
+// ── CANVAS FULL SCREEN ───────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let VW, VH;
+function resize(){
+  VW = window.innerWidth;
+  VH = window.innerHeight;
+  canvas.width = VW;
+  canvas.height = VH;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ── WORLD ────────────────────────────────────────────────
+const WORLD_W = 3200, WORLD_H = 2400;
+let cam = {x:0, y:0};
+function w2s(wx,wy){ return [wx-cam.x, wy-cam.y]; }
+function updateCamera(target){
+  cam.x = target.x - VW/2;
+  cam.y = target.y - VH/2;
+  cam.x = Math.max(0, Math.min(WORLD_W-VW, cam.x));
+  cam.y = Math.max(0, Math.min(WORLD_H-VH, cam.y));
+}
+
+// ── STATE ────────────────────────────────────────────────
+let gstate='title', tags=0, foodStolen=0, level=1, timeLeft=90;
+let particles=[], floats=[], keys={}, clickTarget=null, timerInt=null, lastTs=0;
+
+function setMsg(t){ document.getElementById('msgbar').textContent=t; }
+function updateHUD(){
+  document.getElementById('stimer').textContent=Math.ceil(timeLeft);
+  document.getElementById('sfood').textContent=foodStolen;
+  document.getElementById('slevel').textContent=level;
+  for(let i=1;i<=3;i++) document.getElementById('t'+i).className='td'+(i<=tags?' on':'');
+}
+
+// ── MAP OBJECTS ──────────────────────────────────────────
+let trees=[],bushes=[],rocks=[],tents=[],tables=[],coolers=[],grills=[];
+
+function rnd(min,max){return min+Math.random()*(max-min);}
+
+function initMap(){
+  trees=[];bushes=[];rocks=[];tents=[];tables=[];coolers=[];grills=[];
+
+  // Border forest wall
+  for(let i=0;i<120;i++){
+    trees.push({x:rnd(0,100),          y:rnd(0,WORLD_H), r:rnd(30,55)});
+    trees.push({x:rnd(WORLD_W-100,WORLD_W), y:rnd(0,WORLD_H), r:rnd(30,55)});
+    trees.push({x:rnd(0,WORLD_W),      y:rnd(0,100),     r:rnd(30,55)});
+    trees.push({x:rnd(0,WORLD_W),      y:rnd(WORLD_H-100,WORLD_H), r:rnd(30,55)});
+  }
+  // Interior trees — avoid the central player spawn zone
+  const SPAWN_CLEAR=160; // keep trees away from WORLD_W/2, WORLD_H/2
+  for(let i=0;i<80;i++){
+    let tx,ty,attempts=0;
+    do {
+      tx=rnd(150,WORLD_W-150); ty=rnd(150,WORLD_H-150); attempts++;
+    } while(
+      attempts<20 &&
+      Math.hypot(tx-WORLD_W/2,ty-WORLD_H/2)<SPAWN_CLEAR
+    );
+    trees.push({x:tx,y:ty,r:rnd(24,48)});
+  }
+  // Bushes
+  for(let i=0;i<60;i++)
+    bushes.push({x:rnd(80,WORLD_W-80),y:rnd(80,WORLD_H-80),r:rnd(20,36)});
+  // Rocks
+  for(let i=0;i<25;i++)
+    rocks.push({x:rnd(100,WORLD_W-100),y:rnd(100,WORLD_H-100),rx:rnd(20,38),ry:rnd(14,26)});
+
+  // Campsites
+  const sites=[
+    {cx:500,cy:500},{cx:1200,cy:400},{cx:1900,cy:500},{cx:2700,cy:400},
+    {cx:400,cy:1200},{cx:1100,cy:1300},{cx:1800,cy:1200},{cx:2600,cy:1300},
+    {cx:600,cy:2000},{cx:1400,cy:1900},{cx:2100,cy:2000},{cx:2800,cy:1900},
+    {cx:950,cy:800},{cx:1600,cy:900},{cx:2300,cy:800},
+  ];
+  sites.forEach(s=>{
+    tables.push({x:s.cx,y:s.cy,w:100,h:55});
+    coolers.push({x:s.cx-70+rnd(0,30),y:s.cy+40+rnd(0,25),w:44,h:32,hasFood:true,food:'🧁'});
+    grills.push({x:s.cx+80+rnd(0,25),y:s.cy+rnd(-10,20),r:26,hasFood:true,food:'🍖'});
+  });
+  // Tents
+  const tentSpots=[
+    {x:600,y:340},{x:1300,y:260},{x:2000,y:340},{x:2800,y:260},
+    {x:320,y:1050},{x:1000,y:1150},{x:1700,y:1050},{x:2500,y:1150},
+    {x:500,y:1800},{x:1300,y:1700},{x:2000,y:1800},{x:2700,y:1700},
+    {x:1050,y:650},{x:1700,y:750},{x:2400,y:650},
+  ];
+  tentSpots.forEach(t=>tents.push({...t,w:120,h:95}));
+}
+
+// ── COLLISION ─────────────────────────────────────────────
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function circRect(cx,cy,cr,rx,ry,rw,rh){
+  const nx=Math.max(rx,Math.min(cx,rx+rw)), ny=Math.max(ry,Math.min(cy,ry+rh));
+  return Math.hypot(cx-nx,cy-ny)<cr;
+}
+function isBlocked(x,y,r){
+  for(const t of trees) if(Math.hypot(x-t.x,y-t.y)<r+t.r*0.65) return true;
+  for(const t of tents) if(circRect(x,y,r,t.x-t.w/2,t.y-t.h/2,t.w,t.h)) return true;
+  if(x<r||x>WORLD_W-r||y<r||y>WORLD_H-r) return true;
+  return false;
+}
+
+// ── SAFE SPAWN HELPER ────────────────────────────────────
+// Returns a position guaranteed not inside a tree/tent
+function findSafeSpot(preferX, preferY, radius, maxTries=200){
+  // First try the preferred spot
+  if(!isBlocked(preferX, preferY, radius)) return {x:preferX, y:preferY};
+  // Spiral outward from preferred spot
+  for(let i=0;i<maxTries;i++){
+    const angle = (i/maxTries)*Math.PI*8; // spiral
+    const dist2 = 30 + i*8;
+    const tx = preferX + Math.cos(angle)*dist2;
+    const ty = preferY + Math.sin(angle)*dist2;
+    const cx = Math.max(radius+10, Math.min(WORLD_W-radius-10, tx));
+    const cy = Math.max(radius+10, Math.min(WORLD_H-radius-10, ty));
+    if(!isBlocked(cx, cy, radius)) return {x:cx, y:cy};
+  }
+  // Fallback: scan grid for any open spot
+  for(let gx=200; gx<WORLD_W-200; gx+=80){
+    for(let gy=200; gy<WORLD_H-200; gy+=80){
+      if(!isBlocked(gx,gy,radius)) return {x:gx, y:gy};
+    }
+  }
+  return {x:preferX, y:preferY}; // last resort
+}
+
+// ── PARTICLES / FLOATS ───────────────────────────────────
+function burst(x,y,col,n=14){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,s=1.5+Math.random()*5;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:.025,r:4+Math.random()*5,color:col});
+  }
+}
+function addFloat(x,y,text,col='#ffe44d'){
+  floats.push({x,y,text,col,life:1,vy:-1.5});
+}
+
+// ── DRAW HELPERS ─────────────────────────────────────────
+function onScreen(wx,wy,pad=100){
+  const[sx,sy]=w2s(wx,wy);
+  return sx>-pad&&sx<VW+pad&&sy>-pad&&sy<VH+pad;
+}
+
+// Ground grass
+function drawGround(){
+  ctx.fillStyle='#5a8a32'; ctx.fillRect(0,0,VW,VH);
+  // grass tufts tiling
+  ctx.fillStyle='rgba(50,100,20,0.35)';
+  const ox=(-cam.x%80+80)%80, oy=(-cam.y%80+80)%80;
+  for(let x=ox-80;x<VW+80;x+=80)
+    for(let y=oy-80;y<VH+80;y+=80){
+      ctx.beginPath();ctx.arc(x+10,y+10,5,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(x+50,y+45,4,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(x+20,y+60,3,0,Math.PI*2);ctx.fill();
+    }
+  // dirt paths
+  ctx.fillStyle='rgba(160,120,60,0.25)';
+  const py=w2s(0,1200)[1]; ctx.fillRect(0,py-30,VW,60);
+  const px=w2s(1600,0)[0]; ctx.fillRect(px-30,0,60,VH);
+}
+
+function drawTree(t){
+  if(!onScreen(t.x,t.y,t.r+20)) return;
+  const[sx,sy]=w2s(t.x,t.y);
+  ctx.save();
+  // trunk
+  ctx.fillStyle='#7a5030';
+  ctx.beginPath();ctx.roundRect(sx-t.r*.28,sy-t.r*.15,t.r*.56,t.r*.55,5);ctx.fill();
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  ctx.beginPath();ctx.ellipse(sx+t.r*.2,sy+t.r*.3,t.r*.8,t.r*.25,0,0,Math.PI*2);ctx.fill();
+  // canopy 3 layers
+  [[1.25,'#2a6a1a'],[.95,'#3a8a26'],[.7,'#50aa38']].forEach(([sc,col],i)=>{
+    ctx.fillStyle=col;
+    ctx.shadowColor='rgba(0,0,0,.25)';ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(sx,sy-t.r*.25-i*t.r*.22,t.r*sc,0,Math.PI*2);ctx.fill();
+  });
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+function drawBush(b){
+  if(!onScreen(b.x,b.y,b.r)) return;
+  const[sx,sy]=w2s(b.x,b.y);
+  ctx.save();
+  ctx.fillStyle='#257820';ctx.shadowColor='rgba(0,0,0,.2)';ctx.shadowBlur=5;
+  ctx.beginPath();ctx.ellipse(sx,sy,b.r,b.r*.7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#38a030';
+  ctx.beginPath();ctx.ellipse(sx-b.r*.32,sy-b.r*.1,b.r*.62,b.r*.52,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(sx+b.r*.32,sy-b.r*.1,b.r*.62,b.r*.52,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+function drawRock(r){
+  if(!onScreen(r.x,r.y)) return;
+  const[sx,sy]=w2s(r.x,r.y);
+  ctx.save();
+  ctx.fillStyle='#909090';ctx.shadowBlur=5;ctx.shadowColor='rgba(0,0,0,.3)';
+  ctx.beginPath();ctx.ellipse(sx,sy,r.rx,r.ry,.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#b5b5b5';
+  ctx.beginPath();ctx.ellipse(sx-r.rx*.2,sy-r.ry*.25,r.rx*.4,r.ry*.32,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+function drawTent(t){
+  if(!onScreen(t.x,t.y,t.w)) return;
+  const[sx,sy]=w2s(t.x,t.y);
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=10;
+  const g=ctx.createLinearGradient(sx-t.w/2,sy-t.h*.7,sx+t.w/2,sy+t.h*.3);
+  g.addColorStop(0,'#c8e040');g.addColorStop(1,'#7a9825');
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  ctx.moveTo(sx,sy-t.h*.75);ctx.lineTo(sx-t.w*.55,sy+t.h*.3);ctx.lineTo(sx+t.w*.55,sy+t.h*.3);
+  ctx.closePath();ctx.fill();
+  // grey panel sides
+  ctx.fillStyle='rgba(180,180,200,.5)';
+  ctx.beginPath();ctx.moveTo(sx-t.w*.3,sy-t.h*.3);ctx.lineTo(sx-t.w*.55,sy+t.h*.3);ctx.lineTo(sx-t.w*.1,sy+t.h*.3);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(sx+t.w*.3,sy-t.h*.3);ctx.lineTo(sx+t.w*.55,sy+t.h*.3);ctx.lineTo(sx+t.w*.1,sy+t.h*.3);ctx.closePath();ctx.fill();
+  // door
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.beginPath();ctx.ellipse(sx,sy+t.h*.18,t.w*.2,t.h*.3,0,Math.PI,0);ctx.fill();
+  // highlight stripe
+  ctx.strokeStyle='#e0f060';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(sx,sy-t.h*.75);ctx.lineTo(sx,sy+t.h*.3);ctx.stroke();
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+function drawTable(t){
+  if(!onScreen(t.x,t.y)) return;
+  const[sx,sy]=w2s(t.x,t.y);
+  ctx.save();
+  ctx.fillStyle='#b07848';ctx.shadowBlur=6;ctx.shadowColor='rgba(0,0,0,.3)';
+  ctx.fillRect(sx-t.w/2,sy-t.h/2,t.w,t.h);
+  ctx.fillStyle='#8a5c30';
+  ctx.fillRect(sx-t.w/2,sy-t.h/2,t.w,7);
+  ctx.fillRect(sx-t.w/2,sy+t.h/2-7,t.w,7);
+  // bench
+  ctx.fillStyle='#c08850';
+  ctx.fillRect(sx-t.w/2-10,sy+t.h/2+3,t.w+20,10);
+  ctx.fillRect(sx-t.w/2-10,sy-t.h/2-13,t.w+20,10);
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+function drawCooler(c){
+  if(!onScreen(c.x,c.y)) return;
+  const[sx,sy]=w2s(c.x,c.y);
+  ctx.save();
+  ctx.fillStyle=c.hasFood?'#2255cc':'#555';
+  ctx.shadowBlur=5;ctx.shadowColor='rgba(0,0,0,.3)';
+  ctx.beginPath();ctx.roundRect(sx-c.w/2,sy-c.h/2,c.w,c.h,7);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.25)';
+  ctx.beginPath();ctx.roundRect(sx-c.w/2+3,sy-c.h/2+3,c.w-6,8,4);ctx.fill();
+  if(c.hasFood){ctx.font='18px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.food,sx,sy);}
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+function drawGrill(g){
+  if(!onScreen(g.x,g.y)) return;
+  const[sx,sy]=w2s(g.x,g.y);
+  ctx.save();
+  ctx.strokeStyle='#666';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(sx-10,sy+10);ctx.lineTo(sx-16,sy+28);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(sx+10,sy+10);ctx.lineTo(sx+16,sy+28);ctx.stroke();
+  ctx.fillStyle=g.hasFood?'#2a2a2a':'#555';
+  ctx.shadowBlur=6;ctx.shadowColor='rgba(0,0,0,.4)';
+  ctx.beginPath();ctx.arc(sx,sy,g.r,0,Math.PI*2);ctx.fill();
+  if(g.hasFood){
+    ctx.font='18px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(g.food,sx,sy-3);
+    ctx.fillStyle='rgba(220,220,220,.28)';
+    ctx.beginPath();ctx.ellipse(sx,sy-g.r-10,6,11,0,0,Math.PI*2);ctx.fill();
+  }
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════
+// ── CARTOON KIDS  (resembling real photos) ───────────────
+// Kid A: white tee, black shorts, grey sneakers, slim, side-swept dark hair, shy face
+// Kid B: blue Ralph Lauren hoodie + bear logo, grey sweatpants, RED sneakers, tallest, spiky short hair, fierce roar face
+// Kid C: orange Wander tee, black shorts w/ white stripe, tall black socks + dark crocs, chubbier round face, big smile, arms-wide energy
+// ══════════════════════════════════════════════════════════
+
+function drawKidA(sx,sy,s,anim){ // white shirt — LEADER
+  ctx.save();ctx.translate(sx,sy);
+  const leg=Math.sin(anim*7)*s*.22;
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(0,s*.95,s*.55,s*.18,0,0,Math.PI*2);ctx.fill();
+  // legs — slim black shorts
+  ctx.fillStyle='#1a1a1a';
+  ctx.fillRect(-s*.28,s*.32-leg,s*.24,s*.48);
+  ctx.fillRect(s*.04,s*.32+leg,s*.24,s*.48);
+  // grey/white sneakers
+  ctx.fillStyle='#c0c0c0';
+  ctx.beginPath();ctx.ellipse(-s*.17,s*.8-leg,s*.22,s*.1,-.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.17,s*.8+leg,s*.22,s*.1,.1,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.fillRect(-s*.28,s*.73-leg,s*.22,s*.06);
+  ctx.fillRect(s*.06,s*.73+leg,s*.22,s*.06);
+  // white tee — slim fit
+  ctx.fillStyle='#eeeef0';
+  ctx.beginPath();ctx.roundRect(-s*.38,-s*.05,s*.76,s*.42,s*.1);ctx.fill();
+  // small graphic on shirt (blue circle)
+  ctx.fillStyle='#6699cc';ctx.beginPath();ctx.arc(-s*.08,s*.1,s*.1,0,Math.PI*2);ctx.fill();
+  // arms — slim
+  ctx.fillStyle='#eeeef0';
+  ctx.fillRect(-s*.62,-s*.05+leg*.4,s*.26,s*.32);
+  ctx.fillRect(s*.36,-s*.05-leg*.4,s*.26,s*.32);
+  // skin — slim neck
+  ctx.fillStyle='#f5c5a0';
+  ctx.beginPath();ctx.roundRect(-s*.1,-s*.14,s*.2,s*.12,4);ctx.fill();
+  // head — slightly oval, slimmer
+  ctx.fillStyle='#f5c5a0';
+  ctx.beginPath();ctx.ellipse(0,-s*.46,s*.34,s*.38,0,0,Math.PI*2);ctx.fill();
+  // ears
+  ctx.fillStyle='#e8b090';
+  ctx.beginPath();ctx.ellipse(-s*.34,-s*.46,s*.1,s*.14,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.34,-s*.46,s*.1,s*.14,0,0,Math.PI*2);ctx.fill();
+  // hair — side swept dark, covers forehead
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();ctx.ellipse(-s*.06,-s*.72,s*.36,s*.2,-.15,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-s*.38,-s*.72,s*.76,s*.18);
+  // swept fringe to right
+  ctx.beginPath();ctx.ellipse(s*.18,-s*.62,s*.2,s*.1,-.3,0,Math.PI*2);ctx.fill();
+  // eyes — slightly smaller, narrower (East Asian features)
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();ctx.ellipse(-s*.13,-s*.48,s*.09,s*.06,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.13,-s*.48,s*.09,s*.06,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.1,-s*.5,s*.03,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.16,-s*.5,s*.03,0,Math.PI*2);ctx.fill();
+  // eyebrows thin
+  ctx.strokeStyle='#1a1a1a';ctx.lineWidth=s*.04;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-s*.22,-s*.57);ctx.lineTo(-s*.04,-s*.55);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.04,-s*.55);ctx.lineTo(s*.22,-s*.57);ctx.stroke();
+  // slight shy smile
+  ctx.strokeStyle='#c07858';ctx.lineWidth=s*.05;
+  ctx.beginPath();ctx.arc(0,-s*.35,s*.1,.2,Math.PI-.2);ctx.stroke();
+  // leader star
+  ctx.font=`${s*.5}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('⭐',0,-s*1.05);
+  ctx.restore();
+}
+
+function drawKidB(sx,sy,s,anim){ // blue hoodie — follower 1
+  ctx.save();ctx.translate(sx,sy);
+  const leg=Math.sin(anim*7)*s*.24;
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(0,s*1.02,s*.65,s*.2,0,0,Math.PI*2);ctx.fill();
+  // legs — grey sweatpants (wider)
+  ctx.fillStyle='#c8c8c8';
+  ctx.fillRect(-s*.3,s*.32-leg,s*.28,s*.5);
+  ctx.fillRect(s*.04,s*.32+leg,s*.28,s*.5);
+  // white ankle socks
+  ctx.fillStyle='#f0f0f0';
+  ctx.fillRect(-s*.3,s*.74-leg,s*.28,s*.09);
+  ctx.fillRect(s*.04,s*.74+leg,s*.28,s*.09);
+  // RED sneakers (signature!)
+  ctx.fillStyle='#dd2222';
+  ctx.beginPath();ctx.ellipse(-s*.18,s*.85-leg,s*.26,s*.12,-.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.2,s*.85+leg,s*.26,s*.12,.1,0,Math.PI*2);ctx.fill();
+  // sole stripe white
+  ctx.fillStyle='#fff';ctx.lineWidth=2;
+  ctx.fillRect(-s*.3,s*.79-leg,s*.26,s*.04);
+  ctx.fillRect(s*.04,s*.79+leg,s*.26,s*.04);
+  // blue hoodie body — chunkier
+  ctx.fillStyle='#3a78d0';
+  ctx.beginPath();ctx.roundRect(-s*.46,-s*.08,s*.92,s*.46,s*.12);ctx.fill();
+  // hoodie pocket
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath();ctx.roundRect(-s*.2,s*.18,s*.4,s*.16,s*.05);ctx.fill();
+  // polo bear logo (simplified)
+  ctx.fillStyle='rgba(255,255,255,.8)';ctx.font=`${s*.28}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🐻',s*.12,s*.05);
+  // hoodie drawstring
+  ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=s*.03;
+  ctx.beginPath();ctx.moveTo(-s*.1,-s*.06);ctx.lineTo(-s*.08,s*.12);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.1,-s*.06);ctx.lineTo(s*.08,s*.12);ctx.stroke();
+  // arms chunky
+  ctx.fillStyle='#3a78d0';
+  ctx.fillRect(-s*.7,-s*.06+leg*.4,s*.26,s*.38);
+  ctx.fillRect(s*.44,-s*.06-leg*.4,s*.26,s*.38);
+  // hands
+  ctx.fillStyle='#f5c5a0';
+  ctx.beginPath();ctx.ellipse(-s*.6,s*.34+leg*.4,s*.12,s*.1,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.58,s*.34-leg*.4,s*.12,s*.1,0,0,Math.PI*2);ctx.fill();
+  // neck
+  ctx.fillStyle='#f5c5a0';ctx.beginPath();ctx.roundRect(-s*.12,-s*.16,s*.24,s*.12,4);ctx.fill();
+  // head — slightly wider, taller (biggest kid)
+  ctx.fillStyle='#f5c5a0';
+  ctx.beginPath();ctx.ellipse(0,-s*.52,s*.38,s*.42,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e8b090';
+  ctx.beginPath();ctx.ellipse(-s*.38,-s*.52,s*.1,s*.15,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.38,-s*.52,s*.1,s*.15,0,0,Math.PI*2);ctx.fill();
+  // hair short spiky — very short on sides
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(0,-s*.82,s*.38,s*.18,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-s*.38,-s*.82,s*.76,s*.16);
+  // small spikes on top
+  [-s*.2,-s*.08,s*.08,s*.2].forEach(hx=>{
+    ctx.beginPath();ctx.moveTo(hx,-s*.88);ctx.lineTo(hx-s*.06,-s*1.05);ctx.lineTo(hx+s*.06,-s*1.05);ctx.closePath();ctx.fill();
+  });
+  // FIERCE eyes — wider open
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(-s*.14,-s*.55,s*.11,s*.08,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.14,-s*.55,s*.11,s*.08,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.1,-s*.57,s*.04,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.18,-s*.57,s*.04,0,Math.PI*2);ctx.fill();
+  // eyebrows — angry V shape
+  ctx.strokeStyle='#111';ctx.lineWidth=s*.06;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-s*.26,-s*.68);ctx.lineTo(-s*.04,-s*.63);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.04,-s*.63);ctx.lineTo(s*.26,-s*.68);ctx.stroke();
+  // ROAR mouth — open wide
+  ctx.fillStyle='#8a2020';
+  ctx.beginPath();ctx.arc(0,-s*.38,s*.18,.1,Math.PI-.1);ctx.fill();
+  ctx.fillStyle='#f08080';
+  ctx.beginPath();ctx.arc(0,-s*.34,s*.1,0,Math.PI);ctx.fill();
+  // teeth
+  ctx.fillStyle='#fff';
+  ctx.fillRect(-s*.12,-s*.4,s*.08,s*.06);
+  ctx.fillRect(s*.04,-s*.4,s*.08,s*.06);
+  // peace sign (right hand raised)
+  ctx.font=`${s*.5}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✌️',s*.7,-s*.25);
+  ctx.restore();
+}
+
+function drawKidC(sx,sy,s,anim){ // orange shirt — follower 2
+  ctx.save();ctx.translate(sx,sy);
+  const leg=Math.sin(anim*7)*s*.22;
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(0,s*.95,s*.6,s*.19,0,0,Math.PI*2);ctx.fill();
+  // tall BLACK soccer socks (very distinctive!)
+  ctx.fillStyle='#111';
+  ctx.fillRect(-s*.3,s*.32-leg,s*.27,s*.62);
+  ctx.fillRect(s*.04,s*.32+leg,s*.27,s*.62);
+  // sock stripe detail
+  ctx.fillStyle='#333';
+  ctx.fillRect(-s*.3,s*.36-leg,s*.27,s*.04);
+  ctx.fillRect(s*.04,s*.36+leg,s*.27,s*.04);
+  // dark Crocs / sandals
+  ctx.fillStyle='#2a3a55';
+  ctx.beginPath();ctx.ellipse(-s*.18,s*.96-leg,s*.24,s*.11,-.05,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.18,s*.96+leg,s*.24,s*.11,.05,0,Math.PI*2);ctx.fill();
+  // black shorts with white side stripes
+  ctx.fillStyle='#111';
+  ctx.fillRect(-s*.32,s*.28-leg,s*.28,s*.1);
+  ctx.fillRect(s*.04,s*.28+leg,s*.28,s*.1);
+  // white adidas stripe on shorts
+  ctx.fillStyle='#eee';
+  ctx.fillRect(-s*.34,s*.29-leg,s*.05,s*.08);
+  ctx.fillRect(s*.3,s*.29+leg,s*.05,s*.08);
+  // orange tee — slightly wider (chunkier build)
+  ctx.fillStyle='#d95a28';
+  ctx.beginPath();ctx.roundRect(-s*.44,-s*.06,s*.88,s*.4,s*.1);ctx.fill();
+  // "WANDER" text on shirt
+  ctx.fillStyle='rgba(255,255,255,.85)';ctx.font=`bold ${s*.14}px Arial`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('WANDER',0,s*.06);
+  // bear logo shape
+  ctx.fillStyle='rgba(255,255,255,.6)';ctx.font=`${s*.22}px serif`;ctx.fillText('🐻',-s*.05,s*.2);
+  // arms raised wide (stick energy!)
+  ctx.fillStyle='#d95a28';
+  ctx.fillRect(-s*.72,-s*.22+leg*.3,s*.3,s*.3);
+  ctx.fillRect(s*.44,-s*.22-leg*.3,s*.3,s*.3);
+  // hands up wide
+  ctx.fillStyle='#f5c5a0';
+  ctx.beginPath();ctx.ellipse(-s*.6,-s*.06+leg*.3,s*.13,s*.11,-.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.62,-s*.06-leg*.3,s*.13,s*.11,.3,0,Math.PI*2);ctx.fill();
+  // neck
+  ctx.fillStyle='#f5c5a0';ctx.beginPath();ctx.roundRect(-s*.12,-s*.16,s*.24,s*.13,4);ctx.fill();
+  // head — ROUNDER / chubbier cheeks (most distinctive!)
+  ctx.fillStyle='#f5c5a0';
+  ctx.beginPath();ctx.ellipse(0,-s*.49,s*.4,s*.42,0,0,Math.PI*2);ctx.fill();
+  // chubby cheeks
+  ctx.fillStyle='#f0b898';
+  ctx.beginPath();ctx.ellipse(-s*.36,-s*.46,s*.18,s*.15,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.36,-s*.46,s*.18,s*.15,0,0,Math.PI*2);ctx.fill();
+  // rosy cheek blush
+  ctx.fillStyle='rgba(255,150,120,.35)';
+  ctx.beginPath();ctx.ellipse(-s*.3,-s*.44,s*.1,s*.07,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.3,-s*.44,s*.1,s*.07,0,0,Math.PI*2);ctx.fill();
+  // ears
+  ctx.fillStyle='#e8b090';
+  ctx.beginPath();ctx.ellipse(-s*.4,-s*.49,s*.1,s*.14,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.4,-s*.49,s*.1,s*.14,0,0,Math.PI*2);ctx.fill();
+  // hair — bowl cut style
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(0,-s*.79,s*.42,s*.22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-s*.42,-s*.79,s*.84,s*.2);
+  ctx.beginPath();ctx.ellipse(-s*.38,-s*.65,s*.12,s*.22,-.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.38,-s*.65,s*.12,s*.22,.3,0,Math.PI*2);ctx.fill();
+  // BIG HAPPY eyes — wider smile eyes
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(-s*.14,-s*.52,s*.1,s*.08,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.14,-s*.52,s*.1,s*.08,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.1,-s*.54,s*.035,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.18,-s*.54,s*.035,0,Math.PI*2);ctx.fill();
+  // eyebrows relaxed happy
+  ctx.strokeStyle='#111';ctx.lineWidth=s*.05;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-s*.24,-s*.64);ctx.lineTo(-s*.04,-s*.61);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.04,-s*.61);ctx.lineTo(s*.24,-s*.64);ctx.stroke();
+  // BIG WIDE HAPPY smile
+  ctx.strokeStyle='#c07050';ctx.lineWidth=s*.06;
+  ctx.beginPath();ctx.arc(0,-s*.35,s*.2,.05,Math.PI-.05);ctx.stroke();
+  // stick raised above head
+  ctx.strokeStyle='#8B6030';ctx.lineWidth=s*.06;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-s*.55,-s*.1);ctx.lineTo(s*.55,-s*.45);ctx.stroke();
+  ctx.restore();
+}
+
+// ── BIGFOOT ────────────────────────────────────────────
+function drawBigfoot(sx,sy,s,foodCarried,stunTimer){
+  // Hide in tree — fade out
+  if(bigfoot.hideTimer>0&&bigfoot.hideTimer<2.0){
+    const fadeIn=(2.0-bigfoot.hideTimer)/0.4; // fade over 0.4s
+    const alpha=bigfoot.hideTimer>0.4?Math.max(0,1-fadeIn):0;
+    if(alpha<=0) return;
+    ctx.save();ctx.globalAlpha=alpha;
+  }
+  // Camo blink effect
+  if(bigfoot.isCamo&&bigfoot.camoBlinkTimer>0){
+    const blinkRate=Math.sin(bigfoot.camoBlinkTimer*18);
+    if(blinkRate<0){ drawCamper(sx,sy,s); return; } // show bigfoot peeking through
+  }
+  // Fully disguised as camper
+  if(bigfoot.isCamo){ drawCamper(sx,sy,s); return; }
+  ctx.save();ctx.translate(sx,sy);
+  const bob=Math.sin(Date.now()*.003)*s*.05;
+  ctx.translate(0,bob);
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(0,s*1.05,s*.75,s*.22,0,0,Math.PI*2);ctx.fill();
+  // big feet
+  ctx.fillStyle='#3a1e08';
+  ctx.beginPath();ctx.ellipse(-s*.38,s*1.0,s*.38,s*.16,-.18,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.38,s*1.0,s*.38,s*.16,.18,0,Math.PI*2);ctx.fill();
+  // toes
+  ctx.fillStyle='#2a1505';
+  [-1,1].forEach(side=>{
+    for(let t=0;t<4;t++){
+      ctx.beginPath();ctx.arc(side*(s*.14+t*s*.08),s*1.08,s*.06,0,Math.PI*2);ctx.fill();
+    }
+  });
+  // legs fur
+  ctx.fillStyle='#5a2e0e';
+  ctx.fillRect(-s*.42,s*.55,s*.36,s*.46);ctx.fillRect(s*.08,s*.55,s*.36,s*.46);
+  // body — big barrel chest
+  ctx.fillStyle='#5c3010';
+  ctx.beginPath();ctx.ellipse(0,s*.2,s*.78,s*.88,0,0,Math.PI*2);ctx.fill();
+  // belly lighter
+  ctx.fillStyle='#8a5535';
+  ctx.beginPath();ctx.ellipse(0,s*.3,s*.44,s*.58,0,0,Math.PI*2);ctx.fill();
+  // fur texture lines
+  ctx.strokeStyle='#3a1e08';ctx.lineWidth=s*.035;ctx.lineCap='round';
+  [[-s*.3,s*.0,-s*.5,s*.35],[s*.3,s*.0,s*.5,s*.35],[-s*.1,-s*.2,-s*.2,s*.1],[s*.1,-s*.2,s*.2,s*.1]].forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  });
+  // arms long
+  ctx.fillStyle='#5a2e0e';
+  ctx.beginPath();ctx.ellipse(-s*.9,s*.15,s*.24,s*.5,-.45,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.9,s*.15,s*.24,s*.5,.45,0,Math.PI*2);ctx.fill();
+  // clawed hands
+  ctx.fillStyle='#3a1e08';
+  ctx.beginPath();ctx.ellipse(-s*.88,s*.52,s*.18,s*.14,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.88,s*.52,s*.18,s*.14,0,0,Math.PI*2);ctx.fill();
+  // head
+  ctx.fillStyle='#5c3010';
+  ctx.beginPath();ctx.ellipse(0,-s*.65,s*.58,s*.55,0,0,Math.PI*2);ctx.fill();
+  // ears pointed
+  ctx.beginPath();ctx.ellipse(-s*.52,-s*1.05,s*.22,s*.28,-.35,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.52,-s*1.05,s*.22,s*.28,.35,0,Math.PI*2);ctx.fill();
+  // brow ridge
+  ctx.fillStyle='#3a1e08';
+  ctx.beginPath();ctx.ellipse(0,-s*.82,s*.5,s*.14,0,0,Math.PI*2);ctx.fill();
+  // GLOWING RED EYES
+  ctx.fillStyle='#ff1a00';ctx.shadowColor='#ff3300';ctx.shadowBlur=14;
+  ctx.beginPath();ctx.arc(-s*.24,-s*.72,s*.14,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.24,-s*.72,s*.14,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.2,-s*.74,s*.055,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.28,-s*.74,s*.055,0,Math.PI*2);ctx.fill();
+  // snout
+  ctx.fillStyle='#7a4828';
+  ctx.beginPath();ctx.ellipse(0,-s*.52,s*.3,s*.22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a0a00';
+  ctx.beginPath();ctx.arc(-s*.12,-s*.52,s*.08,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.12,-s*.52,s*.08,0,Math.PI*2);ctx.fill();
+  // mouth snarl
+  ctx.strokeStyle='#2a0a00';ctx.lineWidth=s*.05;
+  ctx.beginPath();ctx.arc(0,-s*.42,s*.2,.15,Math.PI-.15);ctx.stroke();
+  // food carried
+  if(foodCarried){ctx.font=`${s*.7}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(foodCarried,s*.9,-s*.3);}
+  // stun stars
+  if(stunTimer>0){
+    for(let i=0;i<3;i++){
+      const a=Date.now()*.004+i*Math.PI*2/3;
+      ctx.font=`${s*.55}px serif`;ctx.fillText('⭐',Math.cos(a)*s*1.0,-s*1.35+Math.sin(a)*s*.3);
+    }
+  }
+  // tree hiding — leaf swirl particles around bigfoot
+  if(bigfoot.hideTimer>0){
+    ctx.font=`${s*.5}px serif`;ctx.textAlign='center';
+    for(let i=0;i<6;i++){
+      const a=Date.now()*.002+i*Math.PI*2/6;
+      const r2=s*1.2+Math.sin(Date.now()*.004+i)*s*.15;
+      ctx.globalAlpha=Math.min(1,bigfoot.hideTimer/.3);
+      ctx.fillText('🍃',Math.cos(a)*r2,Math.sin(a)*r2-s*.3);
+    }
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+  // restore outer alpha save from hide-fade
+  if(bigfoot.hideTimer>0&&bigfoot.hideTimer<2.0) ctx.restore();
+}
+
+// ── CAMPER DISGUISE ───────────────────────────────────────
+function drawCamper(sx,sy,s){
+  ctx.save();ctx.translate(sx,sy);
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(0,s*.95,s*.55,s*.18,0,0,Math.PI*2);ctx.fill();
+  const leg=Math.sin(bigfoot.animT*5)*s*.18;
+  // khaki green pants
+  ctx.fillStyle='#5a7a30';
+  ctx.fillRect(-s*.28,s*.3-leg,s*.24,s*.5);ctx.fillRect(s*.04,s*.3+leg,s*.24,s*.5);
+  // OVERSIZED boots — giveaway #1
+  ctx.fillStyle='#3a2510';
+  ctx.beginPath();ctx.ellipse(-s*.18,s*.82-leg,s*.3,s*.13,-.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.18,s*.82+leg,s*.3,s*.13,.1,0,Math.PI*2);ctx.fill();
+  // red flannel shirt
+  ctx.fillStyle='#c04030';
+  ctx.beginPath();ctx.roundRect(-s*.4,-s*.06,s*.8,s*.42,s*.1);ctx.fill();
+  // flannel plaid lines
+  ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=s*.06;
+  ctx.beginPath();ctx.moveTo(-s*.4,s*.06);ctx.lineTo(s*.4,s*.06);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-s*.4,s*.22);ctx.lineTo(s*.4,s*.22);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-s*.12,-s*.06);ctx.lineTo(-s*.12,s*.36);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.12,-s*.06);ctx.lineTo(s*.12,s*.36);ctx.stroke();
+  // arms
+  ctx.fillStyle='#c04030';
+  ctx.fillRect(-s*.64,-s*.05+leg*.4,s*.26,s*.34);ctx.fillRect(s*.38,-s*.05-leg*.4,s*.26,s*.34);
+  // furry hands peeking out — giveaway #2
+  ctx.fillStyle='#6a3810';
+  ctx.beginPath();ctx.ellipse(-s*.55,s*.3+leg*.4,s*.16,s*.12,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.55,s*.3-leg*.4,s*.16,s*.12,0,0,Math.PI*2);ctx.fill();
+  // ranger hat (borrowed/stolen)
+  ctx.fillStyle='#4a7a28';
+  ctx.beginPath();ctx.ellipse(0,-s*.72,s*.52,s*.16,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-s*.3,-s*1.1,s*.6,s*.42);
+  ctx.beginPath();ctx.ellipse(0,-s*1.1,s*.3,s*.1,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f0c030';ctx.fillRect(-s*.3,-s*.86,s*.6,s*.05);
+  // face — too tan
+  ctx.fillStyle='#c8a060';
+  ctx.beginPath();ctx.ellipse(0,-s*.48,s*.34,s*.36,0,0,Math.PI*2);ctx.fill();
+  // massive fake beard covers snout — giveaway #3
+  ctx.fillStyle='#5a3010';
+  ctx.beginPath();ctx.ellipse(0,-s*.38,s*.3,s*.22,0,0,Math.PI*2);ctx.fill();
+  // RED glowing eyes — giveaway #4
+  ctx.fillStyle='#cc2200';ctx.shadowColor='#ff2200';ctx.shadowBlur=6;
+  ctx.beginPath();ctx.arc(-s*.12,-s*.53,s*.07,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.12,-s*.53,s*.07,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.09,-s*.55,s*.03,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.15,-s*.55,s*.03,0,Math.PI*2);ctx.fill();
+  // nervous smile
+  ctx.strokeStyle='#8a4a18';ctx.lineWidth=s*.05;
+  ctx.beginPath();ctx.arc(0,-s*.36,s*.12,.1,Math.PI-.1);ctx.stroke();
+  // ❓ floating above — players can suspect!
+  if(Math.sin(Date.now()*.003)>0.5){
+    ctx.font=`${s*.5}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('❓',0,-s*1.5);
+  }
+  ctx.restore();
+}
+
+// ── RANGER ───────────────────────────────────────────────
+function drawRanger(sx,sy,s,anim,alertTimer){
+  ctx.save();ctx.translate(sx,sy);
+  const leg=Math.sin(anim*7)*s*.22;
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(0,s*.95,s*.55,s*.18,0,0,Math.PI*2);ctx.fill();
+  // boots
+  ctx.fillStyle='#3a2510';
+  ctx.beginPath();ctx.ellipse(-s*.17,s*.82-leg,s*.22,s*.11,-.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.17,s*.82+leg,s*.22,s*.11,.1,0,Math.PI*2);ctx.fill();
+  // pants khaki
+  ctx.fillStyle='#7a8a40';
+  ctx.fillRect(-s*.28,s*.3-leg,s*.25,s*.52);ctx.fillRect(s*.04,s*.3+leg,s*.25,s*.52);
+  // shirt ranger green
+  ctx.fillStyle='#4a7a28';
+  ctx.beginPath();ctx.roundRect(-s*.42,-s*.06,s*.84,s*.42,s*.1);ctx.fill();
+  // badge gold
+  ctx.fillStyle='#e8c020';ctx.shadowBlur=4;ctx.shadowColor='#ffd700';
+  ctx.beginPath();ctx.arc(-s*.2,s*.08,s*.13,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.fillStyle='#2a1a00';ctx.font=`${s*.18}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('★',-s*.2,s*.08);
+  // arms
+  ctx.fillStyle='#4a7a28';
+  ctx.fillRect(-s*.66,-s*.05+leg*.4,s*.26,s*.34);ctx.fillRect(s*.4,-s*.05-leg*.4,s*.26,s*.34);
+  // head
+  ctx.fillStyle='#f5c5a0';ctx.beginPath();ctx.ellipse(0,-s*.44,s*.36,s*.38,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e8b090';
+  ctx.beginPath();ctx.ellipse(-s*.36,-s*.44,s*.1,s*.14,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.36,-s*.44,s*.1,s*.14,0,0,Math.PI*2);ctx.fill();
+  // ranger hat
+  ctx.fillStyle='#3a6018';
+  ctx.beginPath();ctx.ellipse(0,-s*.72,s*.52,s*.16,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-s*.3,-s*1.12,s*.6,s*.44);
+  ctx.beginPath();ctx.ellipse(0,-s*1.12,s*.3,s*.1,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f0c030';ctx.fillRect(-s*.3,-s*.85,s*.6,s*.06);
+  // eyes stern
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();ctx.ellipse(-s*.12,-s*.47,s*.08,s*.06,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.12,-s*.47,s*.08,s*.06,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#1a1a1a';ctx.lineWidth=s*.05;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-s*.2,-s*.57);ctx.lineTo(-s*.04,-s*.53);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.04,-s*.53);ctx.lineTo(s*.2,-s*.57);ctx.stroke();
+  if(alertTimer>0){ctx.font=`${s*.65}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('❗',0,-s*1.55);}
+  ctx.restore();
+}
+
+// ── CHARACTERS ───────────────────────────────────────────
+const player = {x:WORLD_W/2,y:WORLD_H/2,vx:0,vy:0,speed:220,r:28,animT:0};
+const followers = [
+  {x:WORLD_W/2-60,y:WORLD_H/2+60,speed:230,r:26,animT:0,draw:drawKidB},
+  {x:WORLD_W/2+60,y:WORLD_H/2+60,speed:230,r:24,animT:0,draw:drawKidC},
+];
+const bigfoot = {
+  x:400,y:400,speed:155,r:32,animT:0,
+  state:'wander',target:null,
+  wanderAngle:Math.random()*Math.PI*2,wanderTimer:0,
+  stunTimer:0,foodCarried:null,
+  // NEW: hide in tree
+  hideTimer:0,          // how long remaining hidden in tree
+  hidingTreeIdx:-1,     // which tree bigfoot is hiding in
+  hideAlpha:1,          // fade alpha when hiding/emerging
+  // NEW: camouflage as camper
+  camoTimer:0,          // seconds remaining as fake camper
+  camoBlinkTimer:0,     // blink countdown before reverting
+  isCamo:false,         // currently disguised
+  camoFood:null,        // what food triggered camo
+};
+const ranger = {
+  x:2800,y:2000,speed:135,r:24,animT:0,
+  state:'patrol',alertTimer:0,patrolIdx:0,
+  patrolPoints:[{x:2800,y:2000},{x:800,y:1800},{x:1600,y:800},{x:2400,y:600},{x:2800,y:1400}],
+};
+
+// ── UPDATE PLAYER ─────────────────────────────────────────
+function updatePlayer(dt){
+  if(gstate!=='playing') return;
+  // Block world movement when any overlay is open
+  if(tentOverlayOpen||grillOverlayOpen||coolerOverlayOpen) return;
+  let vx=0,vy=0;
+  if(keys['ArrowLeft']||keys['a']) vx-=1;
+  if(keys['ArrowRight']||keys['d']) vx+=1;
+  if(keys['ArrowUp']||keys['w']) vy-=1;
+  if(keys['ArrowDown']||keys['s']) vy+=1;
+  if(clickTarget){
+    const dx=clickTarget.x-player.x,dy=clickTarget.y-player.y,d=Math.hypot(dx,dy);
+    if(d>10){vx=dx/d;vy=dy/d;}else clickTarget=null;
+  }
+  const len=Math.hypot(vx,vy);
+  if(len>0){
+    player.animT+=dt;
+    vx/=len;vy/=len;
+    const nx=player.x+vx*player.speed*dt;
+    const ny=player.y+vy*player.speed*dt;
+    if(!isBlocked(nx,player.y,player.r)) player.x=nx;
+    if(!isBlocked(player.x,ny,player.r)) player.y=ny;
+    player.x=Math.max(player.r,Math.min(WORLD_W-player.r,player.x));
+    player.y=Math.max(player.r,Math.min(WORLD_H-player.r,player.y));
+  }
+}
+
+function updateFollowers(dt){
+  if(gstate!=='playing') return;
+  if(tentOverlayOpen||grillOverlayOpen||coolerOverlayOpen) return;
+  const chain=[player,...followers];
+  followers.forEach((f,i)=>{
+    const ldr=chain[i];
+    const dx=ldr.x-f.x,dy=ldr.y-f.y,d=Math.hypot(dx,dy);
+    if(d>60){
+      f.animT+=dt;
+      const spd=f.speed;
+      const nx=f.x+dx/d*spd*dt, ny=f.y+dy/d*spd*dt;
+      if(!isBlocked(nx,f.y,f.r)) f.x=nx;
+      if(!isBlocked(f.x,ny,f.r)) f.y=ny;
+    }
+  });
+}
+
+function updateBigfoot(dt){
+  if(gstate!=='playing') return;
+  bigfoot.animT+=dt;
+  if(bigfoot.stunTimer>0){bigfoot.stunTimer-=dt;return;}
+
+  // ── TREE HIDING ───────────────────────────────────────
+  if(bigfoot.hideTimer>0){
+    bigfoot.hideTimer-=dt;
+    bigfoot.hideAlpha=Math.min(1,bigfoot.hideTimer>.3?0:1-(bigfoot.hideTimer/.3));
+    // fully hidden — teleport to safe spot when timer nearly done
+    if(bigfoot.hideTimer<0.4&&bigfoot.hidingTreeIdx>=0){
+      const t=trees[bigfoot.hidingTreeIdx];
+      // emerge on far side of tree from player
+      const dx=t.x-player.x,dy=t.y-player.y,d=Math.hypot(dx,dy)||1;
+      const _ex=t.x+dx/d*(t.r+bigfoot.r+20);
+      const _ey=t.y+dy/d*(t.r+bigfoot.r+20);
+      const _es=findSafeSpot(_ex,_ey,bigfoot.r,80);
+      bigfoot.x=_es.x; bigfoot.y=_es.y;
+    }
+    if(bigfoot.hideTimer<=0){
+      bigfoot.hidingTreeIdx=-1;bigfoot.hideAlpha=1;
+      bigfoot.state='wander';
+    }
+    return;
+  }
+
+  // ── CAMOUFLAGE (disguised as camper) ─────────────────
+  if(bigfoot.isCamo){
+    bigfoot.camoTimer-=dt;
+    // Start blinking 2s before camo ends
+    if(bigfoot.camoTimer<2) bigfoot.camoBlinkTimer+=dt;
+    if(bigfoot.camoTimer<=0){
+      bigfoot.isCamo=false;bigfoot.camoBlinkTimer=0;
+      addFloat(bigfoot.x,bigfoot.y-40,'👀 Its BIGFOOT!','#ff4444');
+      burst(bigfoot.x,bigfoot.y,'#ff4444',18);
+    }
+    // While camo, move slowly like a camper
+    bigfoot.wanderAngle+=(Math.random()-.5)*.05;
+    const nx=bigfoot.x+Math.cos(bigfoot.wanderAngle)*60*dt;
+    const ny=bigfoot.y+Math.sin(bigfoot.wanderAngle)*60*dt;
+    if(!isBlocked(nx,bigfoot.y,bigfoot.r)) bigfoot.x=nx;
+    if(!isBlocked(bigfoot.x,ny,bigfoot.r)) bigfoot.y=ny;
+    bigfoot.x=Math.max(bigfoot.r,Math.min(WORLD_W-bigfoot.r,bigfoot.x));
+    bigfoot.y=Math.max(bigfoot.r,Math.min(WORLD_H-bigfoot.r,bigfoot.y));
+    return;
+  }
+  const sf=bigfoot;
+  const FLEE=250+level*25;
+  const dP=dist(sf,player);
+  const dFs=followers.map(f=>dist(sf,f));
+  const dR=dist(sf,ranger);
+  const anyClose=dP<FLEE||dFs.some(d=>d<FLEE)||dR<200;
+  if(anyClose){sf.state='flee';sf.foodCarried=null;}
+
+  if(sf.state==='flee'){
+    let fx=0,fy=0;
+    const push=(ox,oy,str)=>{const dx=sf.x-ox,dy=sf.y-oy,d=Math.hypot(dx,dy)||1;fx+=dx/d*str;fy+=dy/d*str;};
+    push(player.x,player.y,3);
+    followers.forEach(f=>push(f.x,f.y,2));
+    push(ranger.x,ranger.y,1.5);
+    const len=Math.hypot(fx,fy)||1;
+    const spd=sf.speed*(1+level*.08);
+    const nx=sf.x+fx/len*spd*dt, ny=sf.y+fy/len*spd*dt;
+    if(!isBlocked(nx,sf.y,sf.r)) sf.x=nx;
+    if(!isBlocked(sf.x,ny,sf.r)) sf.y=ny;
+    if(!anyClose) sf.state='wander';
+
+    // ── Try to HIDE IN NEAREST TREE when being chased ──
+    if(anyClose && sf.hideTimer<=0 && Math.random()<0.008){
+      // Find a tree that's close to bigfoot but away from kids
+      let bestTree=-1, bestScore=-Infinity;
+      trees.forEach((t,i)=>{
+        const dtf=Math.hypot(sf.x-t.x,sf.y-t.y);
+        if(dtf>t.r*1.5||dtf>120) return; // must be very close
+        const dtp=Math.hypot(player.x-t.x,player.y-t.y);
+        const score=dtp-dtf*2; // prefer trees far from player
+        if(score>bestScore){bestScore=score;bestTree=i;}
+      });
+      if(bestTree>=0){
+        sf.hidingTreeIdx=bestTree;
+        sf.hideTimer=2.5; // hide for 2.5 seconds
+        sf.hideAlpha=1;
+        sf.x=trees[bestTree].x; sf.y=trees[bestTree].y;
+        addFloat(sf.x,sf.y-50,'🌲 Bigfoot hid in a tree!','#88ff44');
+        burst(sf.x,sf.y,'#44aa22',12);
+      }
+    }
+  } else {
+    sf.wanderTimer-=dt;
+    if(sf.wanderTimer<=0){
+      sf.wanderTimer=1.5+Math.random()*2;
+      const targets=[
+        ...coolers.filter(c=>c.hasFood).map(c=>({...c,kind:'cooler'})),
+        ...grills.filter(g=>g.hasFood).map(g=>({...g,kind:'grill'})),
+      ];
+      if(targets.length&&Math.random()<.65){
+        targets.sort((a,b)=>dist(sf,a)-dist(sf,b));
+        sf.target=targets[0]; sf.state='steal';
+      } else {sf.state='wander';sf.wanderAngle+=(Math.random()-.5)*1.8;}
+    }
+    if(sf.state==='steal'&&sf.target){
+      const td=dist(sf,sf.target);
+      if(td<50){
+        const tgt=sf.target;
+        const stolenFood=tgt.items?tgt.items.splice(0,1)[0]:(tgt.food||'🍖');
+        if(tgt.items) tgt.hasFood=tgt.items.length>0; else tgt.hasFood=false;
+        sf.foodCarried=typeof stolenFood==='object'?stolenFood.emoji:stolenFood;
+        foodStolen++;
+        addFloat(sf.x,sf.y-40,'🦶 Bigfoot stole food!','#ff6644');
+        burst(sf.x,sf.y,'#ff8844',14);
+        sf.state='wander';sf.target=null;
+        updateHUD();
+        // ── CAMOUFLAGE after eating human food ───────────
+        setTimeout(()=>{
+          sf.foodCarried=null;
+          // 60% chance to disguise after eating
+          if(Math.random()<0.6&&!sf.isCamo){
+            sf.isCamo=true;
+            sf.camoTimer=5;   // 5 seconds disguised
+            sf.camoBlinkTimer=0;
+            addFloat(sf.x,sf.y-50,'🧍 Bigfoot is in disguise!','#ffcc44');
+            burst(sf.x,sf.y,'#ffcc44',16);
+          }
+        },1500);
+      } else {
+        const dx=sf.target.x-sf.x,dy=sf.target.y-sf.y,d=Math.hypot(dx,dy)||1;
+        const nx=sf.x+dx/d*sf.speed*dt,ny=sf.y+dy/d*sf.speed*dt;
+        if(!isBlocked(nx,sf.y,sf.r)) sf.x=nx;
+        if(!isBlocked(sf.x,ny,sf.r)) sf.y=ny;
+      }
+    } else {
+      const nx=sf.x+Math.cos(sf.wanderAngle)*sf.speed*.5*dt;
+      const ny=sf.y+Math.sin(sf.wanderAngle)*sf.speed*.5*dt;
+      if(!isBlocked(nx,sf.y,sf.r)) sf.x=nx; else sf.wanderAngle+=.6;
+      if(!isBlocked(sf.x,ny,sf.r)) sf.y=ny; else sf.wanderAngle+=.6;
+    }
+  }
+  sf.x=Math.max(sf.r,Math.min(WORLD_W-sf.r,sf.x));
+  sf.y=Math.max(sf.r,Math.min(WORLD_H-sf.r,sf.y));
+
+  // Tag check — camo bigfoot CAN still be tagged (reveals them!)
+  const tagD=sf.isCamo?58:52; // slightly easier to tag when disguised
+  const allKids=[player,...followers];
+  if(sf.stunTimer<=0&&allKids.some(k=>dist(sf,k)<tagD)){
+    if(sf.isCamo){ sf.isCamo=false; sf.camoBlinkTimer=0; addFloat(sf.x,sf.y-30,'Disguise blown! 🎭','#ff8844'); }
+    sf.stunTimer=2.8;sf.foodCarried=null;
+    tags++;burst(sf.x,sf.y,'#ffe44d',22);
+    addFloat(sf.x,sf.y-50,`🏃 TAG! ${tags}/3 !!!`,'#ffe44d');
+    updateHUD();
+    if(tags>=3){endGame(true);return;}
+    const _bfr=findSafeSpot(
+      (player.x<WORLD_W/2)?WORLD_W*.8:WORLD_W*.2,
+      (player.y<WORLD_H/2)?WORLD_H*.8:WORLD_H*.2,
+      sf.r
+    );
+    sf.x=_bfr.x; sf.y=_bfr.y;
+  }
+}
+
+function updateRanger(dt){
+  if(gstate!=='playing') return;
+  ranger.animT+=dt;
+  const dSf=dist(ranger,bigfoot);
+  if(dSf<260){ranger.state='chase';ranger.alertTimer=2;}
+  else{ranger.alertTimer=Math.max(0,ranger.alertTimer-dt);if(ranger.alertTimer<=0)ranger.state='patrol';}
+  if(ranger.state==='chase'){
+    const dx=bigfoot.x-ranger.x,dy=bigfoot.y-ranger.y,d=Math.hypot(dx,dy)||1;
+    const nx=ranger.x+dx/d*ranger.speed*dt,ny=ranger.y+dy/d*ranger.speed*dt;
+    if(!isBlocked(nx,ranger.y,ranger.r)) ranger.x=nx;
+    if(!isBlocked(ranger.x,ny,ranger.r)) ranger.y=ny;
+    if(dSf<44&&bigfoot.stunTimer<=0){
+      bigfoot.stunTimer=2;addFloat(ranger.x,ranger.y,'🚨 Ranger tagged Bigfoot!','#ff4444');burst(ranger.x,ranger.y,'#ff4444',12);
+    }
+  } else {
+    const pt=ranger.patrolPoints[ranger.patrolIdx];
+    const dx=pt.x-ranger.x,dy=pt.y-ranger.y,d=Math.hypot(dx,dy);
+    if(d<40) ranger.patrolIdx=(ranger.patrolIdx+1)%ranger.patrolPoints.length;
+    else{
+      const nx=ranger.x+dx/d*ranger.speed*dt,ny=ranger.y+dy/d*ranger.speed*dt;
+      if(!isBlocked(nx,ranger.y,ranger.r)) ranger.x=nx;
+      if(!isBlocked(ranger.x,ny,ranger.r)) ranger.y=ny;
+    }
+  }
+}
+
+// ── MINIMAP ───────────────────────────────────────────────
+function drawMinimap(){
+  const mw=130,mh=100,mx=VW-mw-12,my=12;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.roundRect(mx,my,mw,mh,10);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1.5;ctx.stroke();
+  const sx=x=>mx+x/WORLD_W*mw, sy=y=>my+y/WORLD_H*mh;
+  ctx.fillStyle='#2a6a1a';trees.forEach(t=>{ctx.beginPath();ctx.arc(sx(t.x),sy(t.y),1.5,0,Math.PI*2);ctx.fill();});
+  if(bigfoot.hideTimer>0.4){
+    // Hidden in tree — show faint dot
+    ctx.fillStyle='rgba(139,69,19,.3)';ctx.beginPath();ctx.arc(sx(bigfoot.x),sy(bigfoot.y),4.5,0,Math.PI*2);ctx.fill();
+  } else if(bigfoot.isCamo){
+    // Disguised — show as orange (looks like a camper)
+    ctx.fillStyle='#cc6030';ctx.beginPath();ctx.arc(sx(bigfoot.x),sy(bigfoot.y),4.5,0,Math.PI*2);ctx.fill();
+    ctx.font='7px serif';ctx.textAlign='center';ctx.fillText('❓',sx(bigfoot.x),sy(bigfoot.y)+2);
+  } else {
+    ctx.fillStyle='#8B4513';ctx.beginPath();ctx.arc(sx(bigfoot.x),sy(bigfoot.y),4.5,0,Math.PI*2);ctx.fill();
+  }
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx(player.x),sy(player.y),3.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3a78d0';ctx.beginPath();ctx.arc(sx(followers[0].x),sy(followers[0].y),3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d95a28';ctx.beginPath();ctx.arc(sx(followers[1].x),sy(followers[1].y),3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#4a7a28';ctx.beginPath();ctx.arc(sx(ranger.x),sy(ranger.y),3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,0,.5)';ctx.lineWidth=1;
+  ctx.strokeRect(sx(cam.x),sy(cam.y),VW/WORLD_W*mw,VH/WORLD_H*mh);
+  // legend
+  ctx.font='10px Arial';ctx.fillStyle='#fff';ctx.textAlign='left';
+  ctx.fillText('⬜ You  🟫 Bigfoot  🟩 Ranger',mx+4,my+mh+14);
+  ctx.restore();
+}
+
+// ── TITLE / END ───────────────────────────────────────────
+function drawTitle(){
+  // sky
+  const g=ctx.createLinearGradient(0,0,0,VH);
+  g.addColorStop(0,'#1a3a60');g.addColorStop(1,'#2d5a1b');
+  ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+  // stars
+  ctx.fillStyle='#fff';
+  for(let i=0;i<60;i++){ctx.beginPath();ctx.arc((i*237)%VW,(i*139)%VH*.5,1.2,0,Math.PI*2);ctx.fill();}
+  // moon
+  ctx.fillStyle='#fff8d0';ctx.shadowColor='#fff8d0';ctx.shadowBlur=25;
+  ctx.beginPath();ctx.arc(VW*.8,VH*.12,38,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  // pine silhouette
+  ctx.fillStyle='#0d2008';
+  for(let i=0;i<16;i++){
+    const tx=i*(VW/14),th=120+Math.sin(i*.9)*50;
+    ctx.beginPath();ctx.moveTo(tx,VH);ctx.lineTo(tx-28,VH-th);ctx.lineTo(tx+28,VH-th);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(tx,VH-th+20);ctx.lineTo(tx-22,VH-th-40);ctx.lineTo(tx+22,VH-th-40);ctx.closePath();ctx.fill();
+  }
+  // panel
+  ctx.fillStyle='rgba(0,0,0,.65)';ctx.beginPath();ctx.roundRect(VW/2-280,VH/2-200,560,400,24);ctx.fill();
+  ctx.strokeStyle='#ffe44d';ctx.lineWidth=3;ctx.stroke();
+  // title
+  ctx.fillStyle='#ffe44d';ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=14;
+  ctx.font=`bold ${Math.min(52,VW*.065)}px Fredoka One,cursive`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('🦶 CATCH BIGFOOT! 🦶',VW/2,VH/2-145);
+  ctx.font=`${Math.min(26,VW*.032)}px Fredoka One,cursive`;ctx.fillStyle='#b0e080';
+  ctx.fillText('Camp Edition — Tag Bigfoot 3 Times!',VW/2,VH/2-100);
+  ctx.shadowBlur=0;
+  // draw 3 kids preview
+  const ks=52;
+  drawKidA(VW/2-100,VH/2-20,ks,0);
+  drawKidB(VW/2,VH/2-20,ks,0);
+  drawKidC(VW/2+100,VH/2-20,ks,0);
+  ctx.fillStyle='#ddd';ctx.font=`14px Nunito,sans-serif`;
+  ctx.fillText('Arrow keys / WASD  or  Click / Tap to move',VW/2,VH/2+60);
+  ctx.fillText('Blue & Orange follow automatically',VW/2,VH/2+85);
+  // button pulse
+  const p=.96+Math.sin(Date.now()*.003)*.04;
+  ctx.save();ctx.translate(VW/2,VH/2+150);ctx.scale(p,p);
+  // Button shape
+  ctx.fillStyle='#ffe44d';
+  ctx.shadowColor='rgba(255,220,0,.6)';ctx.shadowBlur=20;
+  ctx.beginPath();ctx.roundRect(-150,-34,300,68,34);ctx.fill();
+  ctx.shadowBlur=0;
+  // Button border
+  ctx.strokeStyle='#c8a800';ctx.lineWidth=3;
+  ctx.beginPath();ctx.roundRect(-150,-34,300,68,34);ctx.stroke();
+  // Text — perfectly centered in button
+  ctx.fillStyle='#1a3a10';
+  ctx.font=`bold 26px Fredoka One,cursive`;
+  ctx.textBaseline='middle';ctx.textAlign='center';
+  ctx.fillText('🏕️  START ADVENTURE',0,1);
+  ctx.restore();
+}
+
+function drawEnd(win){
+  ctx.fillStyle=win?'rgba(10,60,10,.88)':'rgba(60,10,10,.88)';ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle='#ffe44d';ctx.font=`bold ${Math.min(54,VW*.065)}px Fredoka One,cursive`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(win?'🎉 BIGFOOT CAUGHT! 🎉':'😱 BIGFOOT ESCAPED!',VW/2,VH/2-100);
+  ctx.fillStyle='#fff';ctx.font=`${Math.min(26,VW*.032)}px Fredoka One,cursive`;
+  ctx.fillText(`Tags landed: ${tags}/3  |  Food stolen: ${foodStolen}`,VW/2,VH/2-40);
+  // draw big bigfoot
+  drawBigfoot(VW/2,VH/2+20,50,null,win?3:0);
+  ctx.fillStyle='#ffe44d';ctx.beginPath();ctx.roundRect(VW/2-110,VH/2+100,220,54,27);ctx.fill();
+  ctx.fillStyle='#1a3a10';ctx.font=`bold 22px Fredoka One,cursive`;ctx.textBaseline='middle';ctx.textAlign='center';
+  ctx.fillText('▶  Play Again',VW/2,VH/2+127);
+}
+
+// ── GAME LOOP ─────────────────────────────────────────────
+function loop(ts){
+  const dt=Math.min((ts-lastTs)/1000,.05);lastTs=ts;
+  if(gstate==='title'){drawTitle();requestAnimationFrame(loop);return;}
+  if(gstate==='win'||gstate==='lose'){
+    drawGround();rocks.forEach(drawRock);bushes.forEach(drawBush);trees.forEach(drawTree);
+    drawEnd(gstate==='win');requestAnimationFrame(loop);return;
+  }
+  updatePlayer(dt);updateFollowers(dt);updateBigfoot(dt);updateRanger(dt);
+  updateCamera(player);
+  for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=.07;p.life-=p.decay;}
+  particles=particles.filter(p=>p.life>0);
+  for(const f of floats){f.y+=f.vy;f.life-=.018;}
+  floats=floats.filter(f=>f.life>0);
+
+  // Draw world
+  drawGround();
+  rocks.forEach(drawRock);
+  tables.forEach(drawTable);
+  bushes.forEach(drawBush);
+  coolers.forEach(drawCooler);
+  grills.forEach(drawGrill);
+  tents.forEach(drawTent);
+
+  // Y-sort all characters
+  const chars=[
+    {y:bigfoot.y, fn:()=>{const[sx,sy]=w2s(bigfoot.x,bigfoot.y);drawBigfoot(sx,sy,bigfoot.r,bigfoot.foodCarried,bigfoot.stunTimer);}},
+    {y:player.y,    fn:()=>{const[sx,sy]=w2s(player.x,player.y);drawKidA(sx,sy,player.r,player.animT);}},
+    {y:followers[0].y, fn:()=>{const[sx,sy]=w2s(followers[0].x,followers[0].y);drawKidB(sx,sy,followers[0].r,followers[0].animT);}},
+    {y:followers[1].y, fn:()=>{const[sx,sy]=w2s(followers[1].x,followers[1].y);drawKidC(sx,sy,followers[1].r,followers[1].animT);}},
+    {y:ranger.y,    fn:()=>{const[sx,sy]=w2s(ranger.x,ranger.y);drawRanger(sx,sy,ranger.r,ranger.animT,ranger.alertTimer);}},
+  ];
+  chars.sort((a,b)=>a.y-b.y).forEach(c=>c.fn());
+  trees.forEach(drawTree); // trees overdraw base
+
+  // Particles
+  for(const p of particles){
+    const[sx,sy]=w2s(p.x,p.y);
+    ctx.save();ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(sx,sy,p.r,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+  // Float texts
+  for(const f of floats){
+    const[sx,sy]=w2s(f.x,f.y);
+    ctx.save();ctx.globalAlpha=f.life;
+    ctx.font=`bold 17px Fredoka One,cursive`;ctx.textAlign='center';
+    ctx.strokeStyle='rgba(0,0,0,.7)';ctx.lineWidth=4;ctx.strokeText(f.text,sx,sy);
+    ctx.fillStyle=f.col;ctx.fillText(f.text,sx,sy);ctx.restore();
+  }
+  // Proximity ring
+  const dSf=dist(player,bigfoot);
+  const bfHiding=bigfoot.hideTimer>0.4;
+  const bfCamo=bigfoot.isCamo;
+  if(bfHiding){
+    setMsg('🌲 Bigfoot is hiding in a tree... Where will he appear?');
+  } else if(bfCamo){
+    // Subtle warning — red eyes hint
+    if(dSf<200){
+      ctx.save();ctx.strokeStyle='rgba(200,50,50,.3)';ctx.lineWidth=5;
+      ctx.strokeRect(4,4,VW-8,VH-8);ctx.restore();
+      setMsg('👀 Someone looks suspicious... A camper with red eyes?!');
+    } else { setMsg('🧍 Bigfoot is in disguise somewhere in the camp...'); }
+  } else if(dSf<280){
+    const a=Math.max(0,(280-dSf)/280)*.55;
+    ctx.save();ctx.strokeStyle=`rgba(255,80,0,${a})`;ctx.lineWidth=7;
+    ctx.strokeRect(4,4,VW-8,VH-8);ctx.restore();
+    setMsg('🦶 Bigfoot is close — GET HIM!');
+  } else if(ranger.alertTimer>0){setMsg('🚨 Ranger spotted Bigfoot!');}
+  else{setMsg('Find Bigfoot and tag him 3 times! Arrow keys or click/tap to move.');}
+
+  drawMinimap();
+  requestAnimationFrame(loop);
+}
+
+// ── INPUT ─────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  keys[e.key]=true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+  if((e.key===' '||e.key==='Enter')&&(gstate==='title'||gstate==='win'||gstate==='lose')) startGame();
+});
+document.addEventListener('keyup',e=>keys[e.key]=false);
+canvas.addEventListener('click',e=>{
+  if(gstate==='title'||gstate==='win'||gstate==='lose'){startGame();return;}
+  const r=canvas.getBoundingClientRect();
+  const sx=(e.clientX-r.left)*(VW/r.width),sy=(e.clientY-r.top)*(VH/r.height);
+  clickTarget={x:sx+cam.x,y:sy+cam.y};
+});
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(gstate==='title'||gstate==='win'||gstate==='lose'){startGame();return;}
+  const r=canvas.getBoundingClientRect(),t=e.touches[0];
+  const sx=(t.clientX-r.left)*(VW/r.width),sy=(t.clientY-r.top)*(VH/r.height);
+  clickTarget={x:sx+cam.x,y:sy+cam.y};
+},{passive:false});
+
+function endGame(win){
+  gstate=win?'win':'lose';
+  if(timerInt) clearInterval(timerInt);
+  setMsg(win?'🎉 You caught Bigfoot 3 times! Amazing campers!':'⏰ Time\'s up! Bigfoot wins this round...');
+}
+
+function startGame(){
+  tags=0;foodStolen=0;timeLeft=90;
+  particles=[];floats=[];clickTarget=null;
+  initMap();
+  const _ps=findSafeSpot(WORLD_W/2,WORLD_H/2,player.r);
+  player.x=_ps.x;player.y=_ps.y;player.animT=0;
+  const _f0=findSafeSpot(player.x-70,player.y+70,followers[0].r);
+  followers[0].x=_f0.x;followers[0].y=_f0.y;followers[0].animT=0;
+  const _f1=findSafeSpot(player.x+70,player.y+70,followers[1].r);
+  followers[1].x=_f1.x;followers[1].y=_f1.y;followers[1].animT=0;
+  const _bfs=findSafeSpot(500,500,bigfoot.r);
+  bigfoot.x=_bfs.x;bigfoot.y=_bfs.y;bigfoot.state='wander';bigfoot.stunTimer=0;bigfoot.foodCarried=null;bigfoot.hideTimer=0;bigfoot.hidingTreeIdx=-1;bigfoot.hideAlpha=1;bigfoot.camoTimer=0;bigfoot.camoBlinkTimer=0;bigfoot.isCamo=false;
+  const _rs=findSafeSpot(2800,2000,ranger.r);
+  ranger.x=_rs.x;ranger.y=_rs.y;ranger.state='patrol';ranger.alertTimer=0;ranger.patrolIdx=0;
+  gstate='playing';
+  updateHUD();
+  if(timerInt) clearInterval(timerInt);
+  timerInt=setInterval(()=>{
+    if(gstate!=='playing') return;
+    timeLeft=Math.max(0,timeLeft-1);updateHUD();
+    if(timeLeft<=0) endGame(false);
+  },1000);
+  setMsg('Chase Bigfoot and tag him 3 times to win!');
+}
+
+
+// ══════════════════════════════════════════════════════════
+// ── GRILL GRAB MINI-GAME ──────────────────────────────────
+// ══════════════════════════════════════════════════════════
+let collectedFood = 0;
+let nearbyGrill = null;       // grill object player is near
+const GRAB_DIST = 90;         // world units
+
+// Food item types for grill
+const GRILL_FOODS = ['🍖','🌽','🍗','🥩','🍔'];
+
+// ── Check proximity each frame, show/hide button ──────────
+function checkGrillProximity(){
+  if(gstate !== 'playing'){ hideGrabBtn(); return; }
+  let closest = null, closestD = Infinity;
+  for(const g of grills){
+    if(!g.items || g.items.length === 0) continue;
+    const d = dist(player, g);
+    if(d < GRAB_DIST && d < closestD){ closestD = d; closest = g; }
+  }
+  nearbyGrill = closest;
+  if(closest){ showGrabBtn(); }
+  else { hideGrabBtn(); }
+}
+
+function showGrabBtn(){
+  document.getElementById('grab-btn').style.display = 'block';
+}
+function hideGrabBtn(){
+  document.getElementById('grab-btn').style.display = 'none';
+}
+
+// ── Override initMap to give grills food item arrays ──────
+const _origInitMap = initMap;
+initMap = function(){
+  _origInitMap();
+  // Give each grill 2-3 food items
+  grills.forEach(g => {
+    const count = 2 + Math.floor(Math.random()*2); // 2 or 3
+    g.items = [];
+    for(let i=0;i<count;i++){
+      g.items.push(GRILL_FOODS[Math.floor(Math.random()*GRILL_FOODS.length)]);
+    }
+    g.hasFood = true;
+  });
+};
+
+// ── Override drawGrill to show item count ─────────────────
+const _origDrawGrill = drawGrill;
+drawGrill = function(g){
+  if(!onScreen(g.x,g.y)) return;
+  const[sx,sy]=w2s(g.x,g.y);
+  ctx.save();
+  // legs
+  ctx.strokeStyle='#666';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(sx-10,sy+10);ctx.lineTo(sx-16,sy+28);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(sx+10,sy+10);ctx.lineTo(sx+16,sy+28);ctx.stroke();
+  const hasItems = g.items && g.items.length > 0;
+  ctx.fillStyle=hasItems?'#2a2a2a':'#555';
+  ctx.shadowBlur=6;ctx.shadowColor='rgba(0,0,0,.4)';
+  ctx.beginPath();ctx.arc(sx,sy,g.r,0,Math.PI*2);ctx.fill();
+  if(hasItems){
+    // show first food emoji
+    ctx.font='18px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(g.items[0],sx,sy-3);
+    // smoke
+    ctx.fillStyle='rgba(220,220,220,.28)';
+    ctx.beginPath();ctx.ellipse(sx,sy-g.r-10,6,11,0,0,Math.PI*2);ctx.fill();
+    // item count badge
+    if(g.items.length > 1){
+      ctx.fillStyle='#ff8800';ctx.shadowBlur=0;
+      ctx.beginPath();ctx.arc(sx+g.r*.7,sy-g.r*.7,10,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(g.items.length, sx+g.r*.7, sy-g.r*.7);
+    }
+    // nearby glow ring
+    if(g === nearbyGrill){
+      ctx.strokeStyle='rgba(255,180,0,.7)';ctx.lineWidth=3;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();ctx.arc(sx,sy,g.r+8,0,Math.PI*2);ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.shadowBlur=0;ctx.restore();
+};
+
+// ── Bigfoot steals from grill items array too ───────────
+// Patch bigfoot steal logic — after steal, remove from items
+const _origUpdateBigfoot = updateBigfoot;
+updateBigfoot = function(dt){
+  _origUpdateBigfoot(dt);
+  // If bigfoot just stole, also remove an item from that grill
+  // (handled via the target reference in steal state — we patch the steal moment)
+};
+
+// Monkey-patch the steal logic inside updateBigfoot
+// We intercept by checking after update if a grill item was taken
+function bigfootStealItem(grill){
+  if(grill.items && grill.items.length > 0){
+    const stolen = grill.items.splice(Math.floor(Math.random()*grill.items.length),1)[0];
+    grill.hasFood = grill.items.length > 0;
+    bigfoot.foodCarried = stolen;
+    return stolen;
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════════════════
+// ── GRILL OVERLAY MINI-GAME ───────────────────────────────
+// ══════════════════════════════════════════════════════════
+const gc_el = document.getElementById('grill-canvas');
+const gc = gc_el.getContext('2d');
+let gc_W, gc_H;
+let grillItems = [];       // draggable items in the scene
+let backpackRect = {};     // where the backpack is
+let dragItem = null;       // currently dragged item
+let handX = 0, handY = 0; // grabbing hand position
+let grillOverlayOpen = false;
+let activeGrillRef = null; // which world grill we're raiding
+let grillAnimT = 0;        // animation timer
+let collectedThisRound = [];
+let grillBigfootTimer = 0; // countdown before Bigfoot interrupts
+
+function openGrillOverlay(){
+  if(!nearbyGrill || !nearbyGrill.items || nearbyGrill.items.length===0) return;
+  activeGrillRef = nearbyGrill;
+  grillOverlayOpen = true;
+  document.getElementById('grill-overlay').classList.add('active');
+  hideGrabBtn();
+
+  // Size the canvas
+  gc_W = window.innerWidth;
+  gc_H = window.innerHeight - 80; // minus title+hint
+  gc_el.width = gc_W;
+  gc_el.height = gc_H;
+
+  // Build draggable food items spread across grill area
+  grillItems = activeGrillRef.items.map((emoji, i) => {
+    const angle = (i / activeGrillRef.items.length) * Math.PI * 1.2 - Math.PI*.6;
+    const r = 240 + i * 55;
+    return {
+      emoji,
+      x: gc_W * .35 + Math.cos(angle)*r,
+      y: gc_H * .48 + Math.sin(angle)*r,
+      w: 100, h: 100,
+      dragging: false,
+      collected: false,
+      wobble: Math.random()*Math.PI*2,
+    };
+  });
+
+  backpackRect = {
+    x: gc_W*.72, y: gc_H*.08,
+    w: Math.min(220, gc_W*.22), h: Math.min(280, gc_H*.55),
+  };
+
+  collectedThisRound = [];
+  grillBigfootTimer = 12; // 12 seconds before Bigfoot appears
+  dragItem = null;
+  grillAnimT = 0;
+
+  requestAnimationFrame(grillLoop);
+}
+
+function closeGrillOverlay(){
+  grillOverlayOpen = false;
+  document.getElementById('grill-overlay').classList.remove('active');
+
+  // Apply collected items to score
+  if(collectedThisRound.length > 0){
+    collectedFood += collectedThisRound.length;
+    document.getElementById('scollected').textContent = collectedFood;
+    addFloat(player.x, player.y, `+${collectedThisRound.length} 🎒 Food collected!`, '#66ff88');
+    burst(player.x, player.y, '#66ff88', 16);
+
+    // Remove collected items from the world grill
+    if(activeGrillRef){
+      activeGrillRef.items = grillItems.filter(i=>!i.collected).map(i=>i.emoji);
+      activeGrillRef.hasFood = activeGrillRef.items.length > 0;
+    }
+  }
+  activeGrillRef = null;
+}
+
+// ── GRILL OVERLAY DRAW ────────────────────────────────────
+function drawGrillOverlay(){
+  gc.clearRect(0,0,gc_W,gc_H);
+
+  grillAnimT += 0.04;
+
+  // ── Background: outdoor tabletop scene ──
+  // Sky/background gradient
+  const bg = gc.createLinearGradient(0,0,0,gc_H);
+  bg.addColorStop(0,'#4a7a28'); bg.addColorStop(1,'#3a5a18');
+  gc.fillStyle=bg; gc.fillRect(0,0,gc_W,gc_H);
+
+  // Ground dirt under grill
+  gc.fillStyle='#8a6030';
+  gc.beginPath();gc.ellipse(gc_W*.38,gc_H*.72,110,35,0,0,Math.PI*2);gc.fill();
+
+  // ── Draw the GRILL (zoomed in, detailed) ──
+  drawZoomedGrill(gc_W*.35, gc_H*.58);
+
+  // ── Draw BACKPACK ──
+  drawBackpack(backpackRect.x, backpackRect.y, backpackRect.w, backpackRect.h);
+
+  // ── Draw food items (draggable) ──
+  grillItems.forEach(item => {
+    if(item.collected) return;
+    const wobble = item.dragging ? 0 : Math.sin(grillAnimT*2 + item.wobble)*3;
+    gc.save();
+    gc.translate(item.x, item.y + wobble);
+    if(item.dragging){
+      gc.shadowColor='rgba(0,0,0,.4)';gc.shadowBlur=14;
+      gc.scale(1.2,1.2);
+    }
+    // solid plate — warm ceramic, fully opaque
+    gc.fillStyle='#f0d878';
+    gc.beginPath();gc.arc(0,0,74,0,Math.PI*2);gc.fill();
+    gc.fillStyle='#f8e898';
+    gc.beginPath();gc.arc(-6,-6,54,0,Math.PI*2);gc.fill();
+    gc.strokeStyle='#c8a030';gc.lineWidth=5;
+    gc.beginPath();gc.arc(0,0,74,0,Math.PI*2);gc.stroke();
+    // emoji — completely solid, no transparency
+    gc.globalAlpha=1.0;
+    gc.font='84px serif';gc.textAlign='center';gc.textBaseline='middle';
+    gc.fillText(item.emoji,0,4);
+    gc.shadowBlur=0;
+    // label pill background
+    gc.fillStyle='rgba(80,40,10,.85)';
+    gc.beginPath();gc.roundRect(-54,60,108,28,14);gc.fill();
+    gc.fillStyle='#fff';gc.font='bold 15px Fredoka One,cursive';
+    gc.textAlign='center';gc.textBaseline='middle';gc.fillText(item.label,0,74);
+    gc.restore();
+
+    // drag hint if not dragging
+    if(!item.dragging && !dragItem){
+      gc.save();
+      gc.globalAlpha = .6 + Math.sin(grillAnimT*3+item.wobble)*.3;
+      gc.font='12px Fredoka One,cursive';gc.fillStyle='#ffe44d';
+      gc.textAlign='center';gc.textBaseline='top';
+      gc.fillText('drag →',item.x,item.y+88);
+      gc.restore();
+    }
+  });
+
+  // ── Draw HAND cursor ──
+  if(dragItem){
+    drawGrabbingHand(handX, handY, true);
+  }
+
+  // ── Timer bar: bigfoot countdown ──
+  const timerFrac = Math.max(0, grillBigfootTimer / 12);
+  const barW = gc_W - 40;
+  gc.fillStyle='rgba(0,0,0,.4)';
+  gc.beginPath();gc.roundRect(20,gc_H-22,barW,12,6);gc.fill();
+  const barCol = timerFrac > .5 ? '#66cc44' : timerFrac > .25 ? '#ffaa22' : '#ff4444';
+  gc.fillStyle=barCol;
+  gc.beginPath();gc.roundRect(20,gc_H-22,barW*timerFrac,12,6);gc.fill();
+  gc.fillStyle='#ffe44d';gc.font='11px Fredoka One,cursive';gc.textAlign='center';
+  gc.fillText(`🦶 Bigfoot arrives in ${Math.ceil(grillBigfootTimer)}s`,gc_W/2,gc_H-34);
+
+  // ── Bigfoot interruption ──
+  if(grillBigfootTimer <= 0){
+    drawBigfootInterrupt();
+  }
+
+  // ── Collected count in corner ──
+  if(collectedThisRound.length > 0){
+    gc.fillStyle='rgba(0,0,0,.5)';
+    gc.beginPath();gc.roundRect(gc_W-90,8,80,34,17);gc.fill();
+    gc.font='18px Fredoka One,cursive';gc.fillStyle='#66ff88';gc.textAlign='center';gc.textBaseline='middle';
+    gc.fillText(`🎒 +${collectedThisRound.length}`,gc_W-50,25);
+  }
+
+  // all collected? show done
+  const remaining = grillItems.filter(i=>!i.collected).length;
+  if(remaining === 0){
+    gc.fillStyle='rgba(0,0,0,.6)';gc.fillRect(0,0,gc_W,gc_H);
+    gc.fillStyle='#ffe44d';gc.font=`bold 32px Fredoka One,cursive`;
+    gc.textAlign='center';gc.textBaseline='middle';
+    gc.fillText('🎉 All food grabbed!',gc_W/2,gc_H/2-20);
+    gc.font='18px Fredoka One,cursive';gc.fillStyle='#cfc';
+    gc.fillText(`+${collectedThisRound.length} points collected!`,gc_W/2,gc_H/2+20);
+    setTimeout(closeGrillOverlay, 1200);
+  }
+}
+
+function drawZoomedGrill(cx, cy){
+  const s = 340;
+  gc.save(); gc.translate(cx, cy);
+  // legs
+  gc.strokeStyle='#555';gc.lineWidth=7;gc.lineCap='round';
+  gc.beginPath();gc.moveTo(-s*.4,s*.2);gc.lineTo(-s*.55,s*.85);gc.stroke();
+  gc.beginPath();gc.moveTo(s*.4,s*.2);gc.lineTo(s*.55,s*.85);gc.stroke();
+  // cross brace
+  gc.lineWidth=4;
+  gc.beginPath();gc.moveTo(-s*.5,s*.55);gc.lineTo(s*.5,s*.55);gc.stroke();
+  // bowl body
+  gc.fillStyle='#333';gc.shadowColor='rgba(0,0,0,.5)';gc.shadowBlur=12;
+  gc.beginPath();gc.arc(0,0,s,0,Math.PI*2);gc.fill();
+  gc.shadowBlur=0;
+  // inner bowl
+  gc.fillStyle='#1a1a1a';
+  gc.beginPath();gc.arc(0,0,s*.85,0,Math.PI*2);gc.fill();
+  // grill grates
+  gc.strokeStyle='#555';gc.lineWidth=5;gc.lineCap='round';
+  for(let gx=-s*.6; gx<=s*.6; gx+=s*.3){
+    gc.beginPath();gc.moveTo(gx,-s*.65);gc.lineTo(gx,s*.65);gc.stroke();
+  }
+  gc.beginPath();gc.moveTo(-s*.65,-s*.25);gc.lineTo(s*.65,-s*.25);gc.stroke();
+  gc.beginPath();gc.moveTo(-s*.65,s*.25);gc.lineTo(s*.65,s*.25);gc.stroke();
+  // fire glow
+  const fireGlow = gc.createRadialGradient(0,0,10,0,0,s*.7);
+  fireGlow.addColorStop(0,'rgba(255,140,0,.35)');
+  fireGlow.addColorStop(1,'rgba(255,60,0,0)');
+  gc.fillStyle=fireGlow;gc.beginPath();gc.arc(0,0,s*.7,0,Math.PI*2);gc.fill();
+  // smoke wisps
+  for(let i=0;i<3;i++){
+    const sw = Math.sin(grillAnimT*1.5+i*1.2)*18;
+    gc.strokeStyle=`rgba(200,200,200,${.15-i*.04})`;gc.lineWidth=8-i*2;
+    gc.beginPath();
+    gc.moveTo(sw,-s);
+    gc.bezierCurveTo(sw+20,-s-30, sw-20,-s-60, sw+10,-s-90-i*20);
+    gc.stroke();
+  }
+  // rim highlight
+  gc.strokeStyle='rgba(255,255,255,.12)';gc.lineWidth=4;
+  gc.beginPath();gc.arc(0,0,s,Math.PI*.7,Math.PI*1.6);gc.stroke();
+  gc.restore();
+}
+
+function drawBackpack(x, y, w, h){
+  gc.save();gc.translate(x,y);
+  // drop shadow
+  gc.fillStyle='rgba(0,0,0,.25)';
+  gc.beginPath();gc.ellipse(w/2,h+8,w*.45,12,0,0,Math.PI*2);gc.fill();
+  // main body
+  const bg2=gc.createLinearGradient(0,0,w,h);
+  bg2.addColorStop(0,'#5a4a8a');bg2.addColorStop(1,'#3a2a6a');
+  gc.fillStyle=bg2;gc.shadowColor='rgba(0,0,0,.4)';gc.shadowBlur=10;
+  gc.beginPath();gc.roundRect(0,20,w,h-10,18);gc.fill();
+  gc.shadowBlur=0;
+  // top flap
+  gc.fillStyle='#6a5a9a';
+  gc.beginPath();gc.roundRect(4,10,w-8,40,12);gc.fill();
+  // straps
+  gc.strokeStyle='#4a3a7a';gc.lineWidth=8;gc.lineCap='round';
+  gc.beginPath();gc.moveTo(w*.2,20);gc.quadraticCurveTo(w*.15,h*.6,w*.2,h);gc.stroke();
+  gc.beginPath();gc.moveTo(w*.8,20);gc.quadraticCurveTo(w*.85,h*.6,w*.8,h);gc.stroke();
+  // front pocket
+  gc.fillStyle='rgba(255,255,255,.1)';
+  gc.beginPath();gc.roundRect(12,h*.45,w-24,h*.35,10);gc.fill();
+  gc.strokeStyle='rgba(255,255,255,.2)';gc.lineWidth=2;gc.stroke();
+  // zipper pull
+  gc.fillStyle='#ffd700';
+  gc.beginPath();gc.arc(w/2,h*.42,5,0,Math.PI*2);gc.fill();
+  // collected food inside
+  collectedThisRound.forEach((emoji,i)=>{
+    gc.font='22px serif';gc.textAlign='center';gc.textBaseline='middle';
+    const col = i % 3;
+    const row = Math.floor(i/3);
+    gc.fillText(emoji, 28 + col*36, 60 + row*30);
+  });
+  // open top indicator (glowing)
+  gc.strokeStyle='rgba(255,220,80,.5)';gc.lineWidth=3;gc.setLineDash([6,4]);
+  gc.beginPath();gc.moveTo(8,22);gc.lineTo(w-8,22);gc.stroke();
+  gc.setLineDash([]);
+  // label
+  gc.font='bold 13px Fredoka One,cursive';gc.fillStyle='#ffe44d';
+  gc.textAlign='center';gc.textBaseline='top';
+  gc.fillText('🎒 BACKPACK',w/2,-4);
+  gc.restore();
+}
+
+function drawGrabbingHand(x, y, grabbing){
+  gc.save();gc.translate(x,y);
+  // arm
+  gc.strokeStyle='#d4956a';gc.lineWidth=18;gc.lineCap='round';
+  gc.beginPath();gc.moveTo(0,60);gc.lineTo(0,20);gc.stroke();
+  // palm
+  gc.fillStyle='#d4956a';gc.shadowColor='rgba(0,0,0,.3)';gc.shadowBlur=8;
+  gc.beginPath();gc.ellipse(0,0,22,18,0,0,Math.PI*2);gc.fill();
+  if(grabbing){
+    // curled grabbing fingers
+    gc.fillStyle='#d4956a';
+    [[-14,-8],[-8,-16],[2,-18],[12,-14],[18,-4]].forEach(([fx,fy])=>{
+      gc.beginPath();gc.ellipse(fx,fy,7,5,-0.5,0,Math.PI*2);gc.fill();
+    });
+    // thumb
+    gc.beginPath();gc.ellipse(-18,4,6,9,0.8,0,Math.PI*2);gc.fill();
+  } else {
+    // open fingers
+    [[-14,-10],[-6,-18],[4,-20],[14,-16],[20,-6]].forEach(([fx,fy],i)=>{
+      gc.beginPath();gc.ellipse(fx,fy,6,11,-0.3+i*.15,0,Math.PI*2);gc.fill();
+    });
+  }
+  gc.shadowBlur=0;gc.restore();
+}
+
+function drawBigfootInterrupt(){
+  // Bigfoot barges in from left
+  const sx = gc_W * .1 + Math.sin(grillAnimT*8)*4;
+  gc.fillStyle='rgba(0,0,0,.5)';gc.fillRect(0,0,gc_W,gc_H);
+  // Draw bigfoot face bursting in
+  gc.save();gc.translate(sx, gc_H*.4);
+  const s=55;
+  gc.fillStyle='#5c3010';gc.beginPath();gc.ellipse(0,0,s*.9,s,0,0,Math.PI*2);gc.fill();
+  gc.fillStyle='#ff1a00';gc.shadowColor='#ff3300';gc.shadowBlur=14;
+  gc.beginPath();gc.arc(-s*.3,0,s*.2,0,Math.PI*2);gc.fill();
+  gc.beginPath();gc.arc(s*.3,0,s*.2,0,Math.PI*2);gc.fill();
+  gc.shadowBlur=0;
+  gc.fillStyle='#fff';
+  gc.beginPath();gc.arc(-s*.24,-s*.04,s*.08,0,Math.PI*2);gc.fill();
+  gc.beginPath();gc.arc(s*.36,-s*.04,s*.08,0,Math.PI*2);gc.fill();
+  gc.restore();
+  gc.fillStyle='#ffe44d';gc.font=`bold 26px Fredoka One,cursive`;
+  gc.textAlign='center';gc.textBaseline='middle';
+  gc.fillText('🦶 BIGFOOT INCOMING!',gc_W/2,gc_H*.18);
+  gc.fillStyle='#fff';gc.font='16px Fredoka One,cursive';
+  gc.fillText('Grab what you can and RUN!',gc_W/2,gc_H*.75);
+
+  // auto close after 2s
+  if(!gc_el._sfclose){
+    gc_el._sfclose = setTimeout(()=>{
+      gc_el._sfclose = null;
+      closeGrillOverlay();
+      // Make bigfoot head toward that grill
+      if(activeGrillRef){
+        bigfoot.target = activeGrillRef;
+        bigfoot.state = 'steal';
+      }
+    }, 2000);
+  }
+}
+
+// ── GRILL OVERLAY ANIMATION LOOP ─────────────────────────
+function grillLoop(){
+  if(!grillOverlayOpen) return;
+  grillBigfootTimer -= 0.016; // ~60fps
+  drawGrillOverlay();
+  requestAnimationFrame(grillLoop);
+}
+
+// ── DRAG INPUT on grill canvas ────────────────────────────
+function grillPointerDown(ex, ey){
+  const rect = gc_el.getBoundingClientRect();
+  const px = (ex - rect.left)*(gc_W/rect.width);
+  const py = (ey - rect.top)*(gc_H/rect.height);
+  handX=px; handY=py;
+  // hit test food items (reverse so top-rendered items picked first)
+  for(let i=grillItems.length-1;i>=0;i--){
+    const item=grillItems[i];
+    if(item.collected) continue;
+    if(Math.hypot(px-item.x, py-item.y)<70){
+      dragItem=item; item.dragging=true;
+      break;
+    }
+  }
+}
+function grillPointerMove(ex, ey){
+  if(!dragItem) return;
+  const rect = gc_el.getBoundingClientRect();
+  handX = (ex-rect.left)*(gc_W/rect.width);
+  handY = (ey-rect.top)*(gc_H/rect.height);
+  dragItem.x = handX; dragItem.y = handY;
+}
+function grillPointerUp(){
+  if(!dragItem) return;
+  // Check drop on backpack
+  const bp = backpackRect;
+  if(dragItem.x > bp.x && dragItem.x < bp.x+bp.w &&
+     dragItem.y > bp.y && dragItem.y < bp.y+bp.h){
+    // SUCCESS — food collected!
+    dragItem.collected = true;
+    collectedThisRound.push(dragItem.emoji);
+    burst(dragItem.x, dragItem.y, '#66ff88', 10);
+  } else {
+    // Snap back to grill
+    dragItem.x = gc_W*.38 + (Math.random()-.5)*60;
+    dragItem.y = gc_H*.42 + (Math.random()-.5)*60;
+  }
+  dragItem.dragging = false;
+  dragItem = null;
+}
+
+gc_el.addEventListener('mousedown',  e=>{ e.preventDefault(); grillPointerDown(e.clientX,e.clientY); });
+gc_el.addEventListener('mousemove',  e=>{ grillPointerMove(e.clientX,e.clientY); });
+gc_el.addEventListener('mouseup',    e=>{ grillPointerUp(); });
+gc_el.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.touches[0]; grillPointerDown(t.clientX,t.clientY); },{passive:false});
+gc_el.addEventListener('touchmove',  e=>{ e.preventDefault(); const t=e.touches[0]; grillPointerMove(t.clientX,t.clientY); },{passive:false});
+gc_el.addEventListener('touchend',   e=>{ grillPointerUp(); },{passive:false});
+
+// ── Hook into main game loop: check grill proximity ───────
+const _origLoop = loop;
+loop = function(ts){
+  _origLoop(ts);
+  if(gstate==='playing') checkGrillProximity();
+};
+
+// ── Keyboard shortcut: G to grab ─────────────────────────
+document.addEventListener('keydown', e=>{
+  if(e.key==='g'||e.key==='G'){
+    if(nearbyGrill && !grillOverlayOpen) openGrillOverlay();
+  }
+  if(e.key==='Escape' && grillOverlayOpen) closeGrillOverlay();
+});
+
+// ── Update HUD to include collected count ─────────────────
+const _origUpdateHUD = updateHUD;
+updateHUD = function(){
+  _origUpdateHUD();
+  document.getElementById('scollected').textContent = collectedFood;
+};
+
+
+// ══════════════════════════════════════════════════════════
+// ── COOLER MINI-GAME ──────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+const COOLER_FOODS = [
+  {emoji:'🧃',label:'Juice Box'},
+  {emoji:'🍎',label:'Apple'},
+  {emoji:'🥛',label:'Milk'},
+  {emoji:'🥚',label:'Eggs'},
+  {emoji:'🍊',label:'Orange'},
+  {emoji:'🍇',label:'Grapes'},
+  {emoji:'🧴',label:'Yogurt'},
+  {emoji:'🍓',label:'Strawberry'},
+];
+const COOLER_DIST = 85;
+let nearbyCooler = null;
+let coolerOverlayOpen = false;
+let activeCoolerRef = null;
+
+const cc_el = document.getElementById('cooler-canvas');
+const cc = cc_el.getContext('2d');
+let cc_W, cc_H;
+let coolerItems = [];
+let coolerDragItem = null;
+let coolerHandX=0, coolerHandY=0;
+let coolerAnimT=0;
+let coolerCollected=[];
+let coolerCollectedTotal=0;
+
+// Give coolers food item arrays on init
+const _origInitMap2 = initMap;
+initMap = function(){
+  _origInitMap2();
+  coolers.forEach(c=>{
+    const count=2+Math.floor(Math.random()*2);
+    c.items=[];
+    const pool=[...COOLER_FOODS].sort(()=>Math.random()-.5);
+    for(let i=0;i<count;i++) c.items.push(pool[i%pool.length]);
+    c.hasFood=true;
+  });
+};
+
+function checkCoolerProximity(){
+  if(gstate!=='playing'){hideCoolerBtn();return;}
+  let closest=null,closestD=Infinity;
+  for(const c of coolers){
+    if(!c.items||c.items.length===0) continue;
+    const d=dist(player,c);
+    if(d<COOLER_DIST&&d<closestD){closestD=d;closest=c;}
+  }
+  nearbyCooler=closest;
+  closest ? showCoolerBtn() : hideCoolerBtn();
+}
+function showCoolerBtn(){document.getElementById('cooler-btn').style.display='block';}
+function hideCoolerBtn(){document.getElementById('cooler-btn').style.display='none';}
+
+// Override drawCooler to use items array + glow
+const _origDrawCooler=drawCooler;
+drawCooler=function(c){
+  if(!onScreen(c.x,c.y)) return;
+  const[sx,sy]=w2s(c.x,c.y);
+  ctx.save();
+  const hasItems=c.items&&c.items.length>0;
+  ctx.fillStyle=hasItems?'#2255cc':'#555';
+  ctx.shadowBlur=5;ctx.shadowColor='rgba(0,0,0,.3)';
+  ctx.beginPath();ctx.roundRect(sx-c.w/2,sy-c.h/2,c.w,c.h,7);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.25)';
+  ctx.beginPath();ctx.roundRect(sx-c.w/2+3,sy-c.h/2+3,c.w-6,8,4);ctx.fill();
+  if(hasItems){
+    ctx.font='18px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(c.items[0].emoji,sx,sy);
+    if(c.items.length>1){
+      ctx.fillStyle='#ff8800';ctx.shadowBlur=0;
+      ctx.beginPath();ctx.arc(sx+c.w*.45,sy-c.h*.45,10,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='bold 11px Arial';
+      ctx.fillText(c.items.length,sx+c.w*.45,sy-c.h*.45);
+    }
+    if(c===nearbyCooler){
+      ctx.strokeStyle='rgba(80,160,255,.75)';ctx.lineWidth=3;ctx.setLineDash([6,4]);
+      ctx.beginPath();ctx.roundRect(sx-c.w/2-6,sy-c.h/2-6,c.w+12,c.h+12,10);ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.shadowBlur=0;ctx.restore();
+};
+
+function openCoolerOverlay(){
+  if(!nearbyCooler||!nearbyCooler.items||nearbyCooler.items.length===0) return;
+  activeCoolerRef=nearbyCooler;
+  coolerOverlayOpen=true;
+  document.getElementById('cooler-overlay').classList.add('active');
+  hideCoolerBtn();
+  cc_W=window.innerWidth; cc_H=window.innerHeight-80;
+  cc_el.width=cc_W; cc_el.height=cc_H;
+  // Place food items spread inside cooler
+  coolerItems=activeCoolerRef.items.map((item,i)=>{
+    const cols=Math.min(3,activeCoolerRef.items.length);
+    const col=i%cols, row=Math.floor(i/cols);
+    return {
+      emoji:item.emoji, label:item.label,
+      x:cc_W*.20+col*(cc_W*.24)+Math.random()*20-10,
+      y:cc_H*.35+row*(cc_H*.24)+Math.random()*10-5,
+      w:100,h:100,dragging:false,collected:false,
+      wobble:Math.random()*Math.PI*2,
+    };
+  });
+  coolerCollected=[];
+  coolerDragItem=null;
+  coolerAnimT=0;
+  requestAnimationFrame(coolerLoop);
+}
+
+function closeCoolerOverlay(){
+  coolerOverlayOpen=false;
+  document.getElementById('cooler-overlay').classList.remove('active');
+  if(coolerCollected.length>0){
+    coolerCollectedTotal+=coolerCollected.length;
+    document.getElementById('scollected').textContent=collectedFood+coolerCollectedTotal;
+    addFloat(player.x,player.y,`+${coolerCollected.length} 🎒 Snacks grabbed!`,'#88ccff');
+    burst(player.x,player.y,'#4488ff',14);
+    if(activeCoolerRef){
+      activeCoolerRef.items=coolerItems.filter(i=>!i.collected).map(i=>({emoji:i.emoji,label:i.label}));
+      activeCoolerRef.hasFood=activeCoolerRef.items.length>0;
+    }
+  }
+  activeCoolerRef=null;
+}
+
+function drawCoolerOverlay(){
+  cc.clearRect(0,0,cc_W,cc_H);
+  coolerAnimT+=0.04;
+
+  // Background — cool blue night scene
+  const bg=cc.createLinearGradient(0,0,0,cc_H);
+  bg.addColorStop(0,'#0a1428');bg.addColorStop(1,'#0e1e3a');
+  cc.fillStyle=bg;cc.fillRect(0,0,cc_W,cc_H);
+
+  // Ground shadow
+  cc.fillStyle='rgba(0,0,0,.3)';
+  cc.beginPath();cc.ellipse(cc_W*.32,cc_H*.88,240,42,0,0,Math.PI*2);cc.fill();
+
+  // ── Draw open COOLER ──
+  drawZoomedCooler(cc_W*.32, cc_H*.58);
+
+  // ── Draw kid's HAND on right side ──
+  drawKidHandArea(cc_W*.80, cc_H*.42, coolerCollected);
+
+  // ── Food items ──
+  coolerItems.forEach(item=>{
+    if(item.collected) return;
+    const wb=item.dragging?0:Math.sin(coolerAnimT*2.5+item.wobble)*3;
+    cc.save();cc.translate(item.x,item.y+wb);
+    if(item.dragging){cc.shadowColor='rgba(0,0,0,.4)';cc.shadowBlur=14;cc.scale(1.2,1.2);}
+    // solid ice plate — bright white/blue, fully opaque
+    cc.fillStyle='#ddf0ff';
+    cc.beginPath();cc.arc(0,0,72,0,Math.PI*2);cc.fill();
+    cc.fillStyle='#eef8ff';
+    cc.beginPath();cc.arc(-8,-8,52,0,Math.PI*2);cc.fill();
+    cc.strokeStyle='#88ccff';cc.lineWidth=4;
+    cc.beginPath();cc.arc(0,0,72,0,Math.PI*2);cc.stroke();
+    // emoji — full opacity
+    cc.globalAlpha=1;
+    cc.font='80px serif';cc.textAlign='center';cc.textBaseline='middle';
+    cc.fillText(item.emoji,0,4);
+    cc.shadowBlur=0;
+    // label pill
+    cc.fillStyle='#1a3a66';
+    cc.beginPath();cc.roundRect(-52,58,104,26,13);cc.fill();
+    cc.fillStyle='#fff';cc.font='bold 15px Fredoka One,cursive';
+    cc.textAlign='center';cc.textBaseline='middle';cc.fillText(item.label,0,71);
+    cc.restore();
+    if(!item.dragging&&!coolerDragItem){
+      cc.save();cc.globalAlpha=.6+Math.sin(coolerAnimT*3+item.wobble)*.3;
+      cc.font='bold 15px Fredoka One,cursive';cc.fillStyle='#ffe44d';
+      cc.textAlign='center';cc.textBaseline='top';
+      cc.fillText('drag →',item.x,item.y+88);cc.restore();
+    }
+  });
+
+  // Hand follows drag
+  if(coolerDragItem){
+    drawCoolerHand(coolerHandX,coolerHandY,true);
+  }
+
+  // Done state
+  const remaining=coolerItems.filter(i=>!i.collected).length;
+  if(remaining===0&&coolerItems.length>0){
+    cc.fillStyle='rgba(0,0,0,.6)';cc.fillRect(0,0,cc_W,cc_H);
+    cc.fillStyle='#88ccff';cc.font='bold 30px Fredoka One,cursive';
+    cc.textAlign='center';cc.textBaseline='middle';
+    cc.fillText('🧊 Cooler emptied!',cc_W/2,cc_H/2-20);
+    cc.fillStyle='#fff';cc.font='18px Fredoka One,cursive';
+    cc.fillText(`+${coolerCollected.length} snacks collected!`,cc_W/2,cc_H/2+20);
+    setTimeout(closeCoolerOverlay,1200);
+  }
+}
+
+function drawZoomedCooler(cx,cy){
+  cc.save();cc.translate(cx,cy);
+  const w=460,h=320;
+  // shadow
+  cc.fillStyle='rgba(0,0,0,.25)';
+  cc.beginPath();cc.ellipse(0,h/2+10,w*.55,14,0,0,Math.PI*2);cc.fill();
+  // body
+  const bodyG=cc.createLinearGradient(-w/2,-h/2,w/2,h/2);
+  bodyG.addColorStop(0,'#2a66dd');bodyG.addColorStop(1,'#1a3a88');
+  cc.fillStyle=bodyG;cc.shadowColor='rgba(0,0,0,.4)';cc.shadowBlur=12;
+  cc.beginPath();cc.roundRect(-w/2,-h/2,w,h+10,12);cc.fill();
+  cc.shadowBlur=0;
+  // lid (open, flipped up)
+  const lidG=cc.createLinearGradient(-w/2,-h/2-45,w/2,-h/2);
+  lidG.addColorStop(0,'#5588ff');lidG.addColorStop(1,'#2255cc');
+  cc.fillStyle=lidG;
+  cc.beginPath();cc.roundRect(-w/2,-h/2-48,w,50,10);cc.fill();
+  // lid hinge
+  cc.fillStyle='#aaa';cc.beginPath();cc.arc(-w/2+20,-h/2,7,0,Math.PI*2);cc.fill();
+  cc.beginPath();cc.arc(w/2-20,-h/2,7,0,Math.PI*2);cc.fill();
+  // lid label
+  cc.fillStyle='rgba(255,255,255,.6)';cc.font='bold 11px Fredoka One,cursive';
+  cc.textAlign='center';cc.textBaseline='middle';
+  cc.fillText('COLEMAN',0,-h/2-24);
+  // inner cooler wall
+  cc.fillStyle='#1a2a55';
+  cc.beginPath();cc.roundRect(-w/2+8,-h/2+8,w-16,h-4,8);cc.fill();
+  // ICE — chunky white pieces
+  cc.fillStyle='rgba(200,230,255,.7)';
+  [[-40,10,28,14],[-10,18,22,12],[25,8,30,14],[-30,28,20,10],[15,26,24,10],[-55,20,18,10],[50,22,16,10]].forEach(([x,y,rx,ry])=>{
+    cc.beginPath();cc.ellipse(x,y,rx,ry,Math.random()*.5,0,Math.PI*2);cc.fill();
+  });
+  // ice shimmer
+  cc.fillStyle='rgba(255,255,255,.3)';
+  cc.beginPath();cc.ellipse(-20,15,35,10,-.2,0,Math.PI*2);cc.fill();
+  // handle
+  cc.strokeStyle='#4466bb';cc.lineWidth=8;cc.lineCap='round';
+  cc.beginPath();cc.moveTo(-w/2+15,h/2+5);cc.lineTo(-w/2+15,h/2+22);
+  cc.lineTo(w/2-15,h/2+22);cc.lineTo(w/2-15,h/2+5);cc.stroke();
+  // frost glow inside
+  const frostG=cc.createRadialGradient(0,0,10,0,0,80);
+  frostG.addColorStop(0,'rgba(150,200,255,.15)');frostG.addColorStop(1,'rgba(0,0,0,0)');
+  cc.fillStyle=frostG;cc.beginPath();cc.ellipse(0,0,80,55,0,0,Math.PI*2);cc.fill();
+  cc.restore();
+}
+
+function drawKidHandArea(cx,cy,collected){
+  cc.save();cc.translate(cx,cy);
+  // collected items floating near hand
+  collected.forEach((item,i)=>{
+    const angle=(i/Math.max(collected.length,1))*Math.PI-.5;
+    const r=65+i*8;
+    cc.font='26px serif';cc.textAlign='center';cc.textBaseline='middle';
+    cc.fillText(item.emoji,Math.cos(angle)*r,Math.sin(angle)*r-20);
+  });
+  // arm
+  cc.strokeStyle='#d4956a';cc.lineWidth=22;cc.lineCap='round';
+  cc.beginPath();cc.moveTo(0,90);cc.lineTo(0,28);cc.stroke();
+  // sleeve
+  cc.strokeStyle='#eeeef0';cc.lineWidth=26;
+  cc.beginPath();cc.moveTo(0,90);cc.lineTo(0,65);cc.stroke();
+  // palm open
+  cc.fillStyle='#d4956a';cc.shadowColor='rgba(0,0,0,.3)';cc.shadowBlur=8;
+  cc.beginPath();cc.ellipse(0,10,20,16,0,0,Math.PI*2);cc.fill();
+  // open fingers reaching
+  [[-16,-8,-22,-24],[-8,-18,-10,-35],[2,-20,2,-37],[12,-16,14,-33],[18,-6,22,-20]].forEach(([x1,y1,x2,y2])=>{
+    cc.strokeStyle='#d4956a';cc.lineWidth=10;cc.lineCap='round';
+    cc.beginPath();cc.moveTo(x1,y1);cc.lineTo(x2,y2);cc.stroke();
+  });
+  // thumb
+  cc.beginPath();cc.moveTo(-18,4);cc.lineTo(-30,-8);cc.stroke();
+  cc.shadowBlur=0;
+  // label
+  cc.fillStyle='rgba(200,230,255,.7)';cc.font='12px Fredoka One,cursive';
+  cc.textAlign='center';cc.textBaseline='top';cc.fillText('Drop here!',0,55);
+  // drop zone circle
+  cc.strokeStyle='rgba(120,180,255,.4)';cc.lineWidth=2;cc.setLineDash([5,4]);
+  cc.beginPath();cc.arc(0,0,55,0,Math.PI*2);cc.stroke();
+  cc.setLineDash([]);
+  cc.restore();
+}
+
+function drawCoolerHand(x,y,grabbing){
+  cc.save();cc.translate(x,y);
+  cc.strokeStyle='#d4956a';cc.lineWidth=18;cc.lineCap='round';
+  cc.beginPath();cc.moveTo(0,60);cc.lineTo(0,20);cc.stroke();
+  cc.fillStyle='#d4956a';cc.shadowColor='rgba(0,0,0,.3)';cc.shadowBlur=8;
+  cc.beginPath();cc.ellipse(0,0,20,16,0,0,Math.PI*2);cc.fill();
+  if(grabbing){
+    [[-14,-8],[-8,-15],[2,-17],[12,-13],[18,-4]].forEach(([fx,fy])=>{
+      cc.beginPath();cc.ellipse(fx,fy,7,5,-.5,0,Math.PI*2);cc.fill();
+    });
+    cc.beginPath();cc.ellipse(-18,4,6,9,.8,0,Math.PI*2);cc.fill();
+  } else {
+    [[-14,-10],[-6,-18],[4,-20],[14,-16],[20,-6]].forEach(([fx,fy],i)=>{
+      cc.beginPath();cc.ellipse(fx,fy,6,11,-.3+i*.15,0,Math.PI*2);cc.fill();
+    });
+  }
+  cc.shadowBlur=0;cc.restore();
+}
+
+function coolerLoop(){
+  if(!coolerOverlayOpen) return;
+  drawCoolerOverlay();
+  requestAnimationFrame(coolerLoop);
+}
+
+// Cooler drag events
+const COOLER_DROP_ZONE={cx:()=>cc_W*.78,cy:()=>cc_H*.42,r:110};
+function coolerPointerDown(ex,ey){
+  const rect=cc_el.getBoundingClientRect();
+  const px=(ex-rect.left)*(cc_W/rect.width),py=(ey-rect.top)*(cc_H/rect.height);
+  coolerHandX=px;coolerHandY=py;
+  for(let i=coolerItems.length-1;i>=0;i--){
+    const item=coolerItems[i];
+    if(item.collected) continue;
+    if(Math.hypot(px-item.x,py-item.y)<70){
+      coolerDragItem=item;item.dragging=true;break;
+    }
+  }
+}
+function coolerPointerMove(ex,ey){
+  if(!coolerDragItem) return;
+  const rect=cc_el.getBoundingClientRect();
+  coolerHandX=(ex-rect.left)*(cc_W/rect.width);
+  coolerHandY=(ey-rect.top)*(cc_H/rect.height);
+  coolerDragItem.x=coolerHandX;coolerDragItem.y=coolerHandY;
+}
+function coolerPointerUp(){
+  if(!coolerDragItem) return;
+  const dz=COOLER_DROP_ZONE;
+  if(Math.hypot(coolerDragItem.x-dz.cx(),coolerDragItem.y-dz.cy())<dz.r){
+    coolerDragItem.collected=true;
+    coolerCollected.push(coolerDragItem);
+    burst(player.x,player.y,'#4488ff',8);
+  } else {
+    coolerDragItem.x=cc_W*.22+(Math.random()-.5)*80;
+    coolerDragItem.y=cc_H*.4+(Math.random()-.5)*40;
+  }
+  coolerDragItem.dragging=false;coolerDragItem=null;
+}
+cc_el.addEventListener('mousedown',e=>{e.preventDefault();coolerPointerDown(e.clientX,e.clientY);});
+cc_el.addEventListener('mousemove',e=>coolerPointerMove(e.clientX,e.clientY));
+cc_el.addEventListener('mouseup',e=>coolerPointerUp());
+cc_el.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];coolerPointerDown(t.clientX,t.clientY);},{passive:false});
+cc_el.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];coolerPointerMove(t.clientX,t.clientY);},{passive:false});
+cc_el.addEventListener('touchend',e=>coolerPointerUp(),{passive:false});
+
+// ══════════════════════════════════════════════════════════
+// ── TENT INTERIOR ─────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+const TENT_DIST=100;
+let nearbyTent=null;
+let tentOverlayOpen=false;
+let tc_el,tc,tc_W,tc_H;
+let tentAnimT=0;
+let kidState='standing'; // standing | walking | inbed | inchair
+let kidX=0, kidY=0, kidTargetX=0, kidTargetY=0;
+let kidMoving=false;
+let tentClickables=[];
+let zzzTimer=0;
+let tentMsg='';
+let tentMsgTimer=0;
+
+function checkTentProximity(){
+  if(gstate!=='playing'){hideTentBtn();return;}
+  let closest=null,closestD=Infinity;
+  for(const t of tents){
+    const d=dist(player,t);
+    if(d<TENT_DIST&&d<closestD){closestD=d;closest=t;}
+  }
+  nearbyTent=closest;
+  closest ? showTentBtn() : hideTentBtn();
+}
+function showTentBtn(){document.getElementById('tent-btn').style.display='block';}
+function hideTentBtn(){document.getElementById('tent-btn').style.display='none';}
+
+function openTentOverlay(){
+  tentOverlayOpen=true;
+  document.getElementById('tent-overlay').classList.add('active');
+  hideTentBtn();
+  tc_el=document.getElementById('tent-canvas');
+  tc=tc_el.getContext('2d');
+  tc_W=window.innerWidth; tc_H=window.innerHeight-80;
+  tc_el.width=tc_W; tc_el.height=tc_H;
+  // Reset kid position to door
+  kidX=tc_W*.5; kidY=tc_H*.88;
+  kidTargetX=kidX; kidTargetY=kidY;
+  kidState='standing'; kidMoving=false; tentAnimT=0;
+  tentMsg='Click the bed to sleep or the chair to sit!';
+  tentMsgTimer=180;
+  buildTentClickables();
+  requestAnimationFrame(tentLoop);
+}
+
+function closeTentOverlay(){
+  tentOverlayOpen=false;
+  document.getElementById('tent-overlay').classList.remove('active');
+}
+
+function buildTentClickables(){
+  tentClickables=[
+    // Air mattress / bed
+    {id:'bed', x:tc_W*.18, y:tc_H*.48, w:tc_W*.40, h:tc_H*.32,
+     label:'😴 Sleep', action:'inbed'},
+    // Folding chair
+    {id:'chair', x:tc_W*.70, y:tc_H*.38, w:tc_W*.20, h:tc_H*.38,
+     label:'🪑 Sit', action:'inchair'},
+  ];
+}
+
+function drawTentOverlay(){
+  tc.clearRect(0,0,tc_W,tc_H);
+  tentAnimT+=0.04;
+
+  // ── Tent interior walls ──
+  // Floor — sleeping bag green/tan
+  const floor=tc.createLinearGradient(0,tc_H*.5,0,tc_H);
+  floor.addColorStop(0,'#6b4e2a');floor.addColorStop(1,'#4a3218');
+  tc.fillStyle=floor;tc.fillRect(0,tc_H*.42,tc_W,tc_H*.58);
+
+  // Tent walls — orange/amber canvas
+  const wallL=tc.createLinearGradient(0,0,tc_W*.4,tc_H*.5);
+  wallL.addColorStop(0,'#c87a18');wallL.addColorStop(1,'#9a5a10');
+  tc.fillStyle=wallL;
+  tc.beginPath();tc.moveTo(0,0);tc.lineTo(tc_W*.5,tc_H*.05);tc.lineTo(tc_W*.35,tc_H*.5);tc.lineTo(0,tc_H*.55);tc.closePath();tc.fill();
+
+  const wallR=tc.createLinearGradient(tc_W,0,tc_W*.6,tc_H*.5);
+  wallR.addColorStop(0,'#e08a20');wallR.addColorStop(1,'#b06818');
+  tc.fillStyle=wallR;
+  tc.beginPath();tc.moveTo(tc_W,0);tc.lineTo(tc_W*.5,tc_H*.05);tc.lineTo(tc_W*.65,tc_H*.5);tc.lineTo(tc_W,tc_H*.55);tc.closePath();tc.fill();
+
+  // Ceiling
+  const ceil=tc.createLinearGradient(0,0,tc_W,tc_H*.4);
+  ceil.addColorStop(0,'#d88a1a');ceil.addColorStop(0.5,'#f0a030');ceil.addColorStop(1,'#d07818');
+  tc.fillStyle=ceil;
+  tc.beginPath();tc.moveTo(0,0);tc.lineTo(tc_W,0);tc.lineTo(tc_W*.65,tc_H*.5);tc.lineTo(tc_W*.35,tc_H*.5);tc.lineTo(tc_W*.5,tc_H*.05);tc.lineTo(0,0);tc.closePath();tc.fill();
+
+  // Ridge pole
+  tc.strokeStyle='rgba(0,0,0,.25)';tc.lineWidth=4;
+  tc.beginPath();tc.moveTo(tc_W*.5,0);tc.lineTo(tc_W*.5,tc_H*.45);tc.stroke();
+
+  // Door opening (back, slightly open)
+  tc.fillStyle='rgba(0,0,0,.45)';
+  tc.beginPath();tc.ellipse(tc_W*.5,tc_H*.48,tc_W*.12,tc_H*.08,0,Math.PI,0);tc.fill();
+
+  // ── Tent floor mat / ground cover ──
+  tc.fillStyle='#3a7a3a';
+  tc.beginPath();tc.roundRect(tc_W*.05,tc_H*.68,tc_W*.9,tc_H*.28,10);tc.fill();
+  tc.fillStyle='rgba(0,0,0,.15)';
+  tc.beginPath();tc.roundRect(tc_W*.05,tc_H*.68,tc_W*.9,8,10);tc.fill();
+
+  // ── LANTERN hanging ──
+  drawTentLantern(tc_W*.5, tc_H*.18);
+
+  // ── AIR MATTRESS + SLEEPING BAG ──
+  drawAirMattress(tc_W*.22, tc_H*.52);
+
+  // ── FOLDING CHAIR ──
+  drawFoldingChair(tc_W*.74, tc_H*.42);
+
+  // ── BAGS / GEAR ──
+  drawTentBags();
+
+  // ── Kid character inside tent ──
+  drawTentKid();
+
+  // Arrow key movement inside tent
+  if(kidState!=='inbed'&&kidState!=='inchair'){
+    const tkSpd=4.5;
+    let tkvx=0,tkvy=0;
+    if(keys['ArrowLeft']||keys['a'])  tkvx=-1;
+    if(keys['ArrowRight']||keys['d']) tkvx=1;
+    if(keys['ArrowUp']||keys['w'])    tkvy=-1;
+    if(keys['ArrowDown']||keys['s'])  tkvy=1;
+    if(tkvx!==0||tkvy!==0){
+      const tlen=Math.hypot(tkvx,tkvy)||1;
+      kidX=Math.max(40,Math.min(tc_W-40,kidX+tkvx/tlen*tkSpd));
+      kidY=Math.max(tc_H*.4,Math.min(tc_H*.92,kidY+tkvy/tlen*tkSpd));
+      kidState='walking';kidMoving=false;
+      // Check if walked onto a clickable
+      const near=tentClickables.find(c=>
+        kidX>=c.x&&kidX<=c.x+c.w&&kidY>=c.y+c.h*.5&&kidY<=c.y+c.h
+      );
+      if(near){ kidState=near.action; }
+    }
+  }
+
+  // Click-to-move: walk toward target
+  if(kidMoving){
+    const dx=kidTargetX-kidX, dy=kidTargetY-kidY;
+    const d=Math.hypot(dx,dy);
+    if(d<4){
+      kidMoving=false;kidX=kidTargetX;kidY=kidTargetY;
+      if(kidState==='walking'){
+        const near=tentClickables.find(c=>Math.hypot(kidX-(c.x+c.w/2),kidY-(c.y+c.h*.8))<50);
+        if(near) kidState=near.action;
+      }
+    } else {
+      const spd=3.5;
+      kidX+=dx/d*spd; kidY+=dy/d*spd;
+    }
+  }
+
+  // ── Clickable zone highlights ──
+  tentClickables.forEach(c=>{
+    const hover=false;
+    if(kidState!=='inbed'&&kidState!=='inchair'){
+      tc.strokeStyle='rgba(255,220,80,.45)';tc.lineWidth=2;tc.setLineDash([6,4]);
+      tc.beginPath();tc.roundRect(c.x,c.y,c.w,c.h,12);tc.stroke();
+      tc.setLineDash([]);
+      tc.fillStyle='rgba(255,220,80,.6)';tc.font='13px Fredoka One,cursive';
+      tc.textAlign='center';tc.textBaseline='bottom';
+      tc.fillText(c.label,c.x+c.w/2,c.y-4);
+    }
+  });
+
+  // ── Zzz when sleeping ──
+  if(kidState==='inbed'){
+    zzzTimer+=0.05;
+    const zs=['z','zz','zzz'];
+    zs.forEach((z,i)=>{
+      const t2=(zzzTimer+i*.8)%3;
+      tc.save();tc.globalAlpha=Math.min(1,t2)*Math.max(0,1-t2*.5);
+      tc.font=`bold ${14+i*4}px Fredoka One,cursive`;
+      tc.fillStyle='#88ccff';tc.textAlign='center';
+      tc.fillText(z,kidX-30-i*10,kidY-30-t2*25-i*18);tc.restore();
+    });
+    // wake button
+    tc.fillStyle='rgba(255,200,80,.9)';
+    tc.beginPath();tc.roundRect(tc_W/2-60,tc_H*.88,120,32,16);tc.fill();
+    tc.fillStyle='#1a1a1a';tc.font='bold 14px Fredoka One,cursive';
+    tc.textAlign='center';tc.textBaseline='middle';
+    tc.fillText('Wake up!',tc_W/2,tc_H*.88+16);
+  }
+
+  if(kidState==='inchair'){
+    // happy sitting expression above kid
+    tc.font='22px serif';tc.textAlign='center';tc.textBaseline='middle';
+    tc.fillText('😌',kidX,kidY-38);
+    tc.fillStyle='rgba(255,200,80,.9)';
+    tc.beginPath();tc.roundRect(tc_W/2-60,tc_H*.88,120,32,16);tc.fill();
+    tc.fillStyle='#1a1a1a';tc.font='bold 14px Fredoka One,cursive';
+    tc.textAlign='center';tc.textBaseline='middle';
+    tc.fillText('Stand up!',tc_W/2,tc_H*.88+16);
+  }
+
+  // ── Hint message ──
+  if(tentMsgTimer>0){
+    tentMsgTimer--;
+    tc.save();tc.globalAlpha=Math.min(1,tentMsgTimer/30);
+    tc.fillStyle='rgba(0,0,0,.5)';
+    tc.beginPath();tc.roundRect(tc_W/2-160,tc_H*.1,320,30,15);tc.fill();
+    tc.fillStyle='#ffe44d';tc.font='13px Fredoka One,cursive';
+    tc.textAlign='center';tc.textBaseline='middle';
+    tc.fillText(tentMsg,tc_W/2,tc_H*.1+15);tc.restore();
+  }
+}
+
+function drawTentLantern(cx,cy){
+  tc.save();tc.translate(cx,cy);
+  tc.scale(1.8,1.8);
+  // hang cord
+  tc.strokeStyle='#8a6030';tc.lineWidth=2;
+  tc.beginPath();tc.moveTo(0,-20);tc.lineTo(0,0);tc.stroke();
+  // glow
+  const glow=tc.createRadialGradient(0,18,5,0,18,50);
+  glow.addColorStop(0,'rgba(255,200,80,.35)');glow.addColorStop(1,'rgba(255,150,0,0)');
+  tc.fillStyle=glow;tc.beginPath();tc.arc(0,18,50,0,Math.PI*2);tc.fill();
+  // body
+  tc.fillStyle='#c8a030';tc.shadowColor='rgba(255,180,0,.4)';tc.shadowBlur=12;
+  tc.beginPath();tc.roundRect(-14,0,28,36,5);tc.fill();tc.shadowBlur=0;
+  // glass panel
+  tc.fillStyle='rgba(255,220,100,.6)';
+  tc.beginPath();tc.roundRect(-10,4,20,28,3);tc.fill();
+  // flicker
+  const f=0.85+Math.sin(tentAnimT*7)*.15;
+  tc.fillStyle=`rgba(255,200,0,${f*.5})`;
+  tc.beginPath();tc.ellipse(0,18,8,12,0,0,Math.PI*2);tc.fill();
+  // top cap
+  tc.fillStyle='#a07820';tc.beginPath();tc.roundRect(-16,-4,32,8,4);tc.fill();
+  tc.restore();
+}
+
+function drawAirMattress(cx,cy){
+  tc.save();tc.translate(cx,cy);
+  const w=tc_W*.40, h=tc_H*.30;
+  // mattress body
+  const mg=tc.createLinearGradient(0,0,0,h);
+  mg.addColorStop(0,'#3a8a60');mg.addColorStop(1,'#286645');
+  tc.fillStyle=mg;tc.shadowColor='rgba(0,0,0,.3)';tc.shadowBlur=8;
+  tc.beginPath();tc.roundRect(-w/2,0,w,h,14);tc.fill();tc.shadowBlur=0;
+  // air channels
+  tc.strokeStyle='rgba(255,255,255,.15)';tc.lineWidth=3;
+  for(let i=1;i<6;i++){
+    tc.beginPath();tc.moveTo(-w/2+12,h*i/6);tc.lineTo(w/2-12,h*i/6);tc.stroke();
+  }
+  // Pillow
+  const pg=tc.createLinearGradient(-w/2,-18,w/2,0);
+  pg.addColorStop(0,'#f5e8d0');pg.addColorStop(1,'#e0d0b0');
+  tc.fillStyle=pg;tc.shadowColor='rgba(0,0,0,.2)';tc.shadowBlur=5;
+  tc.beginPath();tc.roundRect(-w/2+8,-22,w-16,30,12);tc.fill();tc.shadowBlur=0;
+  // pillow crease
+  tc.strokeStyle='rgba(0,0,0,.1)';tc.lineWidth=2;
+  tc.beginPath();tc.moveTo(0,-22);tc.lineTo(0,8);tc.stroke();
+  // Sleeping bag on top
+  const sbg=tc.createLinearGradient(-w/2,0,w/2,h);
+  sbg.addColorStop(0,'#e05030');sbg.addColorStop(1,'#a03018');
+  tc.fillStyle=sbg;
+  tc.beginPath();tc.roundRect(-w/2+5,h*.3,w-10,h*.65,10);tc.fill();
+  // sleeping bag zipper
+  tc.strokeStyle='rgba(255,200,0,.6)';tc.lineWidth=2.5;tc.setLineDash([4,3]);
+  tc.beginPath();tc.moveTo(0,h*.3);tc.lineTo(0,h*.95);tc.stroke();tc.setLineDash([]);
+  tc.restore();
+}
+
+function drawFoldingChair(cx,cy){
+  tc.save();tc.translate(cx,cy);
+  const h=tc_H*.4;
+  // back legs
+  tc.strokeStyle='#555';tc.lineWidth=5;tc.lineCap='round';
+  tc.beginPath();tc.moveTo(-18,0);tc.lineTo(-22,h);tc.stroke();
+  tc.beginPath();tc.moveTo(18,0);tc.lineTo(22,h);tc.stroke();
+  // front legs
+  tc.beginPath();tc.moveTo(-18,h*.35);tc.lineTo(-14,h);tc.stroke();
+  tc.beginPath();tc.moveTo(18,h*.35);tc.lineTo(14,h);tc.stroke();
+  // cross brace
+  tc.lineWidth=3;
+  tc.beginPath();tc.moveTo(-18,h*.6);tc.lineTo(18,h*.6);tc.stroke();
+  // seat
+  const sg=tc.createLinearGradient(-22,0,22,h*.35);
+  sg.addColorStop(0,'#1a55aa');sg.addColorStop(1,'#0a3077');
+  tc.fillStyle=sg;tc.shadowColor='rgba(0,0,0,.3)';tc.shadowBlur=6;
+  tc.beginPath();tc.roundRect(-22,h*.3,44,h*.22,4);tc.fill();tc.shadowBlur=0;
+  // back rest
+  tc.fillStyle=sg;
+  tc.beginPath();tc.roundRect(-20,-4,40,h*.38,4);tc.fill();
+  // armrests
+  tc.fillStyle='#2a66cc';
+  tc.beginPath();tc.roundRect(-28,h*.14,10,h*.18,3);tc.fill();
+  tc.beginPath();tc.roundRect(18,h*.14,10,h*.18,3);tc.fill();
+  tc.restore();
+}
+
+function drawTentBags(){
+  // Left corner bag
+  tc.save();tc.translate(tc_W*.08,tc_H*.74);
+  tc.fillStyle='#4a6a30';tc.shadowColor='rgba(0,0,0,.2)';tc.shadowBlur=5;
+  tc.scale(1.8,1.8);
+  tc.beginPath();tc.roundRect(0,0,55,42,8);tc.fill();tc.shadowBlur=0;
+  tc.fillStyle='rgba(255,255,255,.1)';
+  tc.beginPath();tc.roundRect(4,4,47,10,4);tc.fill();
+  tc.fillStyle='#ffd700';tc.beginPath();tc.arc(27,4,5,0,Math.PI*2);tc.fill();
+  tc.font='10px Fredoka One,cursive';tc.fillStyle='rgba(255,255,255,.6)';
+  tc.textAlign='center';tc.fillText('PACK',27,28);
+  tc.restore();
+
+  // Right corner bag / shoes
+  tc.save();tc.translate(tc_W*.84,tc_H*.76);
+  tc.scale(1.8,1.8);
+  tc.fillStyle='#222';tc.shadowColor='rgba(0,0,0,.2)';tc.shadowBlur=4;
+  tc.beginPath();tc.ellipse(12,8,22,10,-.2,0,Math.PI*2);tc.fill();
+  tc.fillStyle='#333';
+  tc.beginPath();tc.ellipse(30,12,22,10,.2,0,Math.PI*2);tc.fill();
+  tc.fillStyle='rgba(255,30,30,.8)';
+  tc.beginPath();tc.ellipse(12,5,18,7,-.2,0,Math.PI*2);tc.fill();
+  tc.restore();
+
+  // Small snack bag on floor
+  tc.save();tc.translate(tc_W*.62,tc_H*.76);
+  tc.fillStyle='#d4a020';tc.beginPath();tc.roundRect(0,0,38,30,6);tc.fill();
+  tc.font='14px serif';tc.textAlign='center';tc.textBaseline='middle';
+  tc.fillText('🍿',19,15);tc.restore();
+
+  // Water bottle
+  tc.save();tc.translate(tc_W*.56,tc_H*.7);
+  tc.fillStyle='rgba(100,180,255,.7)';tc.shadowColor='rgba(0,0,0,.2)';tc.shadowBlur=4;
+  tc.beginPath();tc.roundRect(0,0,16,38,8);tc.fill();tc.shadowBlur=0;
+  tc.fillStyle='rgba(255,255,255,.3)';tc.beginPath();tc.roundRect(3,5,5,14,3);tc.fill();
+  tc.fillStyle='#555';tc.beginPath();tc.roundRect(-1,-5,18,8,4);tc.fill();
+  tc.restore();
+}
+
+function drawTentKid(){
+  tc.save();
+  const s=55;
+  let drawX=kidX, drawY=kidY;
+  const isMoving=kidMoving;
+  const anim=isMoving?tentAnimT:0;
+  const leg=Math.sin(anim*8)*s*.2;
+
+  if(kidState==='inbed'){
+    // Lying down on mattress
+    tc.translate(tc_W*.28,tc_H*.62);
+    tc.rotate(-.05);
+    // body horizontal
+    tc.fillStyle='#eeeef0';
+    tc.beginPath();tc.roundRect(-s*1.6,-s*.28,s*3.2,s*.6,s*.2);tc.fill();
+    // head
+    tc.fillStyle='#f5c5a0';tc.beginPath();tc.arc(-s*1.8,0,s*.45,0,Math.PI*2);tc.fill();
+    tc.fillStyle='#1c1108';tc.beginPath();tc.ellipse(-s*1.8,-s*.2,s*.45,s*.22,0,0,Math.PI*2);tc.fill();
+    // sleepy eyes
+    tc.strokeStyle='#1a1a1a';tc.lineWidth=s*.06;
+    tc.beginPath();tc.moveTo(-s*2.0,0);tc.lineTo(-s*1.72,0);tc.stroke();
+    tc.beginPath();tc.moveTo(-s*1.62,0);tc.lineTo(-s*1.35,0);tc.stroke();
+  } else if(kidState==='inchair'){
+    // Sitting in chair
+    tc.translate(tc_W*.72,tc_H*.59);
+    // legs hanging
+    tc.fillStyle='#1a1a1a';
+    tc.fillRect(-s*.28,s*.05,s*.22,s*.55);tc.fillRect(s*.06,s*.05,s*.22,s*.55);
+    // body
+    tc.fillStyle='#eeeef0';tc.beginPath();tc.roundRect(-s*.38,-s*.25,s*.76,s*.35,s*.1);tc.fill();
+    // head
+    tc.fillStyle='#f5c5a0';tc.beginPath();tc.ellipse(0,-s*.55,s*.34,s*.36,0,0,Math.PI*2);tc.fill();
+    tc.fillStyle='#1c1108';tc.beginPath();
+    tc.moveTo(-s*.38,-s*.75);tc.quadraticCurveTo(-s*.06,-s*.62,tc_W*.0,-s*.58);
+    tc.quadraticCurveTo(s*.22,-s*.62,s*.36,-s*.75);
+    tc.quadraticCurveTo(s*.38,-s*.55,s*.36,-s*.45);tc.lineTo(-s*.36,-s*.45);
+    tc.quadraticCurveTo(-s*.38,-s*.55,-s*.38,-s*.75);tc.closePath();tc.fill();
+    // happy eyes
+    tc.strokeStyle='#1a1a1a';tc.lineWidth=s*.07;tc.lineCap='round';
+    tc.beginPath();tc.arc(-s*.13,-s*.55,s*.08,Math.PI*.1,Math.PI*.9);tc.stroke();
+    tc.beginPath();tc.arc(s*.13,-s*.55,s*.08,Math.PI*.1,Math.PI*.9);tc.stroke();
+    // smile
+    tc.strokeStyle='#c07858';tc.lineWidth=s*.06;
+    tc.beginPath();tc.arc(0,-s*.4,s*.1,.2,Math.PI-.2);tc.stroke();
+  } else {
+    // Walking/standing
+    tc.translate(drawX,drawY);
+    tc.fillStyle='rgba(0,0,0,.15)';tc.beginPath();tc.ellipse(0,s*.92,s*.5,s*.15,0,0,Math.PI*2);tc.fill();
+    tc.fillStyle='#1a1a1a';
+    tc.fillRect(-s*.26,s*.3-leg,s*.22,s*.44);tc.fillRect(s*.04,s*.3+leg,s*.22,s*.44);
+    tc.fillStyle='#c0c0c0';
+    tc.beginPath();tc.ellipse(-s*.16,s*.76-leg,s*.2,s*.09,-.1,0,Math.PI*2);tc.fill();
+    tc.beginPath();tc.ellipse(s*.16,s*.76+leg,s*.2,s*.09,.1,0,Math.PI*2);tc.fill();
+    tc.fillStyle='#eeeef0';tc.beginPath();tc.roundRect(-s*.36,-.05*s,s*.72,s*.4,s*.1);tc.fill();
+    tc.fillStyle='#eeeef0';
+    tc.fillRect(-s*.58,-s*.05+leg*.4,s*.24,s*.3);tc.fillRect(s*.34,-s*.05-leg*.4,s*.24,s*.3);
+    tc.fillStyle='#f5c5a0';tc.beginPath();tc.ellipse(0,-s*.44,s*.32,s*.36,0,0,Math.PI*2);tc.fill();
+    // hair
+    tc.fillStyle='#1c1108';
+    tc.beginPath();tc.moveTo(-s*.34,-s*.7);tc.quadraticCurveTo(-s*.06,-s*.82,s*.0,-s*.8);
+    tc.quadraticCurveTo(s*.2,-s*.82,s*.34,-s*.7);tc.quadraticCurveTo(s*.36,-s*.5,s*.34,-s*.42);
+    tc.lineTo(-s*.34,-s*.42);tc.quadraticCurveTo(-s*.36,-s*.5,-s*.34,-s*.7);tc.closePath();tc.fill();
+    tc.fillStyle='#1a1a1a';
+    tc.beginPath();tc.ellipse(-s*.12,-s*.46,s*.08,s*.055,0,0,Math.PI*2);tc.fill();
+    tc.beginPath();tc.ellipse(s*.12,-s*.46,s*.08,s*.055,0,0,Math.PI*2);tc.fill();
+    tc.strokeStyle='#c07858';tc.lineWidth=s*.05;
+    tc.beginPath();tc.arc(0,-s*.34,s*.09,.2,Math.PI-.2);tc.stroke();
+  }
+  tc.restore();
+}
+
+function tentLoop(){
+  if(!tentOverlayOpen) return;
+  drawTentOverlay();
+  requestAnimationFrame(tentLoop);
+}
+
+// Tent click interaction
+function tentClick(ex,ey){
+  const rect=tc_el.getBoundingClientRect();
+  const px=(ex-rect.left)*(tc_W/rect.width);
+  const py=(ey-rect.top)*(tc_H/rect.height);
+
+  // Wake up / stand up button
+  if(py>tc_H*.85&&px>tc_W/2-60&&px<tc_W/2+60){
+    if(kidState==='inbed'||kidState==='inchair'){
+      kidState='standing'; kidX=tc_W*.5; kidY=tc_H*.82;
+      tentMsg='Click bed or chair!';tentMsgTimer=90;
+      return;
+    }
+  }
+
+  if(kidState==='inbed'||kidState==='inchair') return;
+
+  // Check clickables
+  for(const c of tentClickables){
+    if(px>=c.x&&px<=c.x+c.w&&py>=c.y&&py<=c.y+c.h){
+      kidTargetX=c.x+c.w/2; kidTargetY=c.y+c.h*.8;
+      kidMoving=true; kidState='walking';
+      tentMsg=`Walking to ${c.label}...`;tentMsgTimer=60;
+      return;
+    }
+  }
+
+  // Click to walk there
+  kidTargetX=px; kidTargetY=Math.min(py,tc_H*.88);
+  kidMoving=true; kidState='walking';
+}
+
+tc_el=document.getElementById('tent-canvas');
+tc_el.addEventListener('click',e=>tentClick(e.clientX,e.clientY));
+tc_el.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];tentClick(t.clientX,t.clientY);},{passive:false});
+
+// ── HOOK ALL PROXIMITY CHECKS INTO MAIN LOOP ─────────────
+const _origLoopGrillCheck=loop;
+loop=function(ts){
+  _origLoopGrillCheck(ts);
+  if(gstate==='playing'){
+    checkCoolerProximity();
+    checkTentProximity();
+  }
+};
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key==='c'||e.key==='C'){if(nearbyCooler&&!coolerOverlayOpen)openCoolerOverlay();}
+  if(e.key==='t'||e.key==='T'){if(nearbyTent&&!tentOverlayOpen)openTentOverlay();}
+  if(e.key==='Escape'){
+    if(coolerOverlayOpen)closeCoolerOverlay();
+    if(tentOverlayOpen)closeTentOverlay();
+  }
+});
+
+initMap();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
