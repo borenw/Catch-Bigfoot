@@ -119,6 +119,88 @@
     font-size:.9rem;color:#88aacc;padding:4px 0 10px;}
 
   /* ── TENT OVERLAY ── */
+  /* ── SURF BUTTON ── */
+  #surf-btn{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#00aaff,#0066cc);
+    color:#fff;font-family:'Fredoka One',cursive;font-size:1.3rem;
+    padding:14px 36px;border:none;border-radius:50px;cursor:pointer;
+    box-shadow:0 6px 24px rgba(0,120,220,.6);z-index:20;
+    display:none;white-space:nowrap;
+    animation:pulse-btn .8s ease-in-out infinite alternate;
+  }
+  /* ── TALK BUTTON ── */
+  #talk-btn{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:linear-gradient(135deg,#ff88cc,#cc4488);
+    color:#fff;font-family:'Fredoka One',cursive;font-size:1.3rem;
+    padding:14px 36px;border:none;border-radius:50px;cursor:pointer;
+    box-shadow:0 6px 24px rgba(200,60,120,.6);z-index:20;
+    display:none;white-space:nowrap;
+    animation:pulse-btn .8s ease-in-out infinite alternate;
+  }
+  /* ── MANGA DIALOG OVERLAY ── */
+  #manga-overlay{
+    position:fixed;inset:0;z-index:40;
+    background:rgba(0,0,0,.92);
+    display:none;align-items:center;justify-content:center;
+    flex-direction:column;
+  }
+  #manga-overlay.active{display:flex;}
+  #manga-panel{
+    position:relative;
+    width:min(700px,96vw);height:min(580px,92vh);
+    background:#fff;
+    border:5px solid #111;
+    border-radius:4px;
+    overflow:hidden;
+    font-family:'Georgia',serif;
+  }
+  #manga-canvas{display:block;}
+  #manga-close{
+    position:absolute;top:10px;right:14px;
+    background:#111;border:none;border-radius:50%;
+    width:36px;height:36px;color:#fff;font-size:1.2rem;
+    cursor:pointer;line-height:36px;text-align:center;z-index:5;
+  }
+  #manga-next{
+    position:absolute;bottom:14px;right:14px;
+    background:#111;color:#fff;border:none;border-radius:8px;
+    padding:8px 20px;font-family:'Fredoka One',cursive;font-size:1rem;
+    cursor:pointer;z-index:5;
+  }
+  #manga-next:hover{background:#333;}
+  /* ── PIKACHU SCATTER BUTTON ── */
+  #scatter-btn{
+    position:fixed;bottom:24px;right:24px;
+    width:72px;height:72px;
+    background:radial-gradient(circle at 40% 35%,#ffe44d,#f5c800);
+    border:3px solid #c89000;border-radius:50%;
+    cursor:pointer;z-index:20;display:none;
+    box-shadow:0 4px 18px rgba(245,200,0,.6);
+    font-size:2rem;line-height:68px;text-align:center;
+    transition:transform .1s;
+    animation:pk-pulse .9s ease-in-out infinite alternate;
+  }
+  #scatter-btn:active{transform:scale(.9);}
+  #scatter-btn.cooldown{
+    background:radial-gradient(circle at 40% 35%,#888,#555);
+    border-color:#444;box-shadow:none;animation:none;cursor:default;
+  }
+  #scatter-btn .cd-label{
+    position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
+    font-size:.65rem;color:#ffe44d;font-family:'Fredoka One',cursive;
+    white-space:nowrap;text-shadow:1px 1px 3px rgba(0,0,0,.8);
+  }
+  /* cooldown arc drawn on canvas overlay */
+  #scatter-canvas{
+    position:fixed;bottom:24px;right:24px;
+    width:72px;height:72px;pointer-events:none;z-index:21;display:none;
+  }
+  @keyframes pk-pulse{
+    from{box-shadow:0 4px 18px rgba(245,200,0,.5);}
+    to{box-shadow:0 4px 30px rgba(255,240,80,.95),0 0 0 6px rgba(245,200,0,.2);}
+  }
   #tent-btn{
     position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
     background:linear-gradient(135deg,#c8a030,#a07820);
@@ -167,12 +249,29 @@
   <div class="hi">🎒 Collected: <span id="scollected">0</span></div>
   <div class="hi">🏃 Tags: <div class="tag-row"><div class="td" id="t1"></div><div class="td" id="t2"></div><div class="td" id="t3"></div></div></div>
   <div class="hi">🌲 Level <span id="slevel">1</span></div>
+  <div class="hi" id="scatter-hud" style="display:none">⚡ <span id="scatter-cd" style="color:#ffe44d">Ready!</span></div>
+  <div class="hi" id="wave-hud" style="display:none">🌊 <span id="wave-cd" style="color:#00ccff">--s</span></div>
 </div>
 <canvas id="c"></canvas>
 <div id="msgbar">Click or press Space to start!</div>
 <button id="grab-btn" onclick="openGrillOverlay()">🍖 Grab Food!</button>
 <button id="cooler-btn" onclick="openCoolerOverlay()">🧊 Open Cooler!</button>
 <button id="tent-btn" onclick="openTentOverlay()">⛺ Enter Tent!</button>
+
+<!-- PIKACHU SCATTER BUTTON -->
+<button id="scatter-btn" onclick="triggerScatter()">⚡<span class="cd-label">SCATTER!</span></button>
+<button id="surf-btn" onclick="mountSurfboard()">🏄 Surf!</button>
+<button id="talk-btn" onclick="openMangaDialog()">💬 Talk!</button>
+
+<!-- MANGA DIALOG OVERLAY -->
+<div id="manga-overlay">
+  <div id="manga-panel">
+    <button id="manga-close" onclick="closeMangaDialog()">✕</button>
+    <canvas id="manga-canvas"></canvas>
+    <button id="manga-next" onclick="nextMangaLine()">Next ▶</button>
+  </div>
+</div>
+<canvas id="scatter-canvas"></canvas>
 
 <!-- COOLER OVERLAY -->
 <div id="cooler-overlay">
@@ -219,7 +318,7 @@ resize();
 window.addEventListener('resize', resize);
 
 // ── WORLD ────────────────────────────────────────────────
-const WORLD_W = 3200, WORLD_H = 2400;
+const WORLD_W = 3200, WORLD_H = 3400;
 let cam = {x:0, y:0};
 function w2s(wx,wy){ return [wx-cam.x, wy-cam.y]; }
 function updateCamera(target){
@@ -243,6 +342,7 @@ function updateHUD(){
 
 // ── MAP OBJECTS ──────────────────────────────────────────
 let trees=[],bushes=[],rocks=[],tents=[],tables=[],coolers=[],grills=[];
+let beachPeople=[],umbrellas=[],sandcastles=[];
 
 function rnd(min,max){return min+Math.random()*(max-min);}
 
@@ -257,11 +357,11 @@ function initMap(){
     trees.push({x:rnd(0,WORLD_W),      y:rnd(WORLD_H-100,WORLD_H), r:rnd(30,55)});
   }
   // Interior trees — avoid the central player spawn zone
-  const SPAWN_CLEAR=160; // keep trees away from WORLD_W/2, WORLD_H/2
+  const SPAWN_CLEAR=160;
   for(let i=0;i<80;i++){
     let tx,ty,attempts=0;
     do {
-      tx=rnd(150,WORLD_W-150); ty=rnd(150,WORLD_H-150); attempts++;
+      tx=rnd(150,WORLD_W-150); ty=rnd(150,WORLD_H-2600); attempts++;
     } while(
       attempts<20 &&
       Math.hypot(tx-WORLD_W/2,ty-WORLD_H/2)<SPAWN_CLEAR
@@ -294,7 +394,68 @@ function initMap(){
     {x:500,y:1800},{x:1300,y:1700},{x:2000,y:1800},{x:2700,y:1700},
     {x:1050,y:650},{x:1700,y:750},{x:2400,y:650},
   ];
+
   tentSpots.forEach(t=>tents.push({...t,w:120,h:95}));
+
+  // ── BEACH (bottom strip, y: 2500–2900) ──────────────────
+  beachPeople=[];umbrellas=[];sandcastles=[];
+
+  // Beach umbrellas scattered along shore
+  for(let i=0;i<14;i++){
+    umbrellas.push({
+      x:200+i*(WORLD_W-400)/13, y:2550+rnd(-40,80),
+      color:['#ff4444','#4488ff','#ff8800','#44cc44','#cc44cc','#44cccc'][i%6],
+      r:55, tilt:(Math.random()-.5)*.3,
+    });
+  }
+
+  // Sand castles
+  for(let i=0;i<8;i++)
+    sandcastles.push({x:rnd(200,WORLD_W-200), y:rnd(2580,2720)});
+
+  // Beach people — guys & girls in swimsuits
+  const swimColors=['#ff6688','#4488ff','#ff8844','#44cc88','#cc44aa','#ffcc44','#44aaff','#ff4488','#ff2266','#00aaff'];
+  const teenNames=['Kai','Leo','Jake','Max','Tom','Zoe','Ava','Luna','Rose','Elle','Mia','Sam','Jay','Miko','Finn','Aria','Eli','Nova','Ryu','Kira'];
+  for(let i=0;i<20;i++){
+    const isGirl=i%2===1;
+    const isTeen=i>4; // most are teens
+    beachPeople.push({
+      x:rnd(180,WORLD_W-180),
+      y:rnd(2520,2840),
+      isGirl, isTeen,
+      swimColor:swimColors[i%swimColors.length],
+      hairColor:['#1a1a1a','#8B4513','#f5c000','#cc4400','#4a2200','#ff6600'][i%6],
+      skinTone:['#f5c5a0','#d4956a','#c07840','#8B5e3c','#f0b898'][i%5],
+      name:teenNames[i%teenNames.length],
+      animT:rnd(0,Math.PI*2),
+      state:['walk','idle','wave','sit','run'][Math.floor(Math.random()*5)],
+      dir:Math.random()>.5?1:-1,
+      walkT:rnd(0,4),
+      speed:rnd(25,50),
+    });
+  }
+
+  // ── Add Robin-style character: dark hair, elegant, mature ──
+  beachPeople.push({
+    x: WORLD_W*.6, y: 2500,
+    isGirl:true, isTeen:false, isRobinStyle:true,
+    swimColor:'#220033',  // dark purple one-piece
+    hairColor:'#1a0a2a',  // very dark purple-black hair
+    skinTone:'#f0d0b0',
+    name:'Robin',
+    animT:1.2, state:'idle', dir:-1, walkT:4, speed:20,
+  });
+
+  // ── Add Nami-style character: tall, orange hair, stick-slim ──
+  beachPeople.push({
+    x: WORLD_W*.4, y: 2480,
+    isGirl:true, isTeen:true, isNamiStyle:true,
+    swimColor:'#ff6600',   // orange bikini
+    hairColor:'#ff7700',   // bright orange hair
+    skinTone:'#f5c5a0',
+    name:'Nami',
+    animT:0, state:'walk', dir:1, walkT:3, speed:38,
+  });
 }
 
 // ── COLLISION ─────────────────────────────────────────────
@@ -352,6 +513,450 @@ function onScreen(wx,wy,pad=100){
 }
 
 // Ground grass
+// ── BEACH DRAWING ────────────────────────────────────────
+function drawBeach(){
+  // Only draw if camera can see the beach area
+  const beachWorldY = 2350;
+  const [,beachSY] = w2s(0, beachWorldY);
+  if(beachSY > VH + 60) return;
+
+  // ── Sand ──
+  const sandG = ctx.createLinearGradient(0, beachSY, 0, VH+100);
+  sandG.addColorStop(0,'#e8d090');
+  sandG.addColorStop(0.4,'#f0dc98');
+  sandG.addColorStop(1,'#d8c070');
+  ctx.fillStyle = sandG;
+  ctx.fillRect(0, beachSY, VW, VH - beachSY + 100);
+
+  // Sand texture dots
+  ctx.fillStyle='rgba(180,150,60,.18)';
+  for(let i=0;i<80;i++){
+    const [sx,sy]=w2s(100+i*(WORLD_W-200)/79, beachWorldY+50+(i%7)*30);
+    if(sx<-10||sx>VW+10) continue;
+    ctx.beginPath();ctx.arc(sx,sy,2+i%3,0,Math.PI*2);ctx.fill();
+  }
+
+  // ── Water ──
+  const waveY = beachWorldY + 300;
+  const [,waveSY] = w2s(0,waveY);
+  if(waveSY < VH+60){
+    const waterG = ctx.createLinearGradient(0,waveSY,0,VH+100);
+    waterG.addColorStop(0,'#40a8d8');
+    waterG.addColorStop(0.3,'#2288c8');
+    waterG.addColorStop(1,'#1166aa');
+    ctx.fillStyle=waterG;
+    ctx.fillRect(0,waveSY,VW,VH-waveSY+100);
+
+    // Animated small passive waves
+    const t=Date.now()*.001;
+    ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=3;
+    for(let wv=0;wv<4;wv++){
+      const [,wsy2]=w2s(0,waveY+wv*28);
+      ctx.beginPath();
+      for(let x=0;x<VW;x+=4){
+        const wy=wsy2+Math.sin(x*.014+t*1.8+wv*1.3)*9;
+        x===0?ctx.moveTo(x,wy):ctx.lineTo(x,wy);
+      }ctx.stroke();
+    }
+    // ── BIG CATCHABLE WAVE — prominent, animated ──────────────────────
+    if(bigWave.active){
+      const [,bwSY]=w2s(0,bigWave.worldY);
+      if(bwSY>-40&&bwSY<VH+40){
+        // Wave crest curl
+        const bwHeight=22+Math.sin(t*3)*4;
+        const bwGrad=ctx.createLinearGradient(0,bwSY-bwHeight,0,bwSY+bwHeight*2);
+        bwGrad.addColorStop(0,'rgba(120,220,255,0)');
+        bwGrad.addColorStop(0.3,'rgba(180,240,255,0.85)');
+        bwGrad.addColorStop(0.55,'rgba(255,255,255,0.95)');
+        bwGrad.addColorStop(0.7,'rgba(100,200,255,0.6)');
+        bwGrad.addColorStop(1,'rgba(60,140,220,0)');
+        ctx.fillStyle=bwGrad;
+        ctx.beginPath();
+        for(let x=0;x<VW;x+=3){
+          const wy=bwSY+Math.sin(x*.018+t*2.5)*10-bwHeight/2;
+          x===0?ctx.moveTo(x,wy-bwHeight):ctx.lineTo(x,wy-bwHeight);
+        }
+        for(let x=VW;x>=0;x-=3){
+          const wy=bwSY+Math.sin(x*.018+t*2.5)*10+bwHeight;
+          ctx.lineTo(x,wy+bwHeight);
+        }
+        ctx.closePath();ctx.fill();
+        // White crest line
+        ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=5;
+        ctx.beginPath();
+        for(let x=0;x<VW;x+=3){
+          const wy=bwSY+Math.sin(x*.018+t*2.5)*10;
+          x===0?ctx.moveTo(x,wy):ctx.lineTo(x,wy);
+        }ctx.stroke();
+        // Countdown label
+        const timeLeft2=Math.max(0,waveCycleTimer).toFixed(1);
+        ctx.fillStyle='rgba(0,0,0,.5)';
+        ctx.beginPath();ctx.roundRect(VW/2-70,bwSY-44,140,28,14);ctx.fill();
+        ctx.fillStyle='#fff';ctx.font='bold 14px Fredoka One,cursive';
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(`🌊 Catch it! ${timeLeft2}s`,VW/2,bwSY-30);
+      }
+    }
+    // Foam strip at shoreline
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.beginPath();
+    for(let x=0;x<VW;x+=4){
+      const wy=waveSY+Math.sin(x*.018+t*2)*8;
+      x===0?ctx.moveTo(x,wy):ctx.lineTo(x,wy);
+    }
+    ctx.lineTo(VW,waveSY+22);ctx.lineTo(0,waveSY+22);ctx.closePath();ctx.fill();
+
+    // ── DOLPHINS ──────────────────────────────────────────
+    for(let d=0;d<3;d++){
+      const dt2=t*0.7+d*2.1;
+      const [dx2,dy2]=w2s(400+d*900+Math.sin(dt2*.3)*200, waveY+80+d*40);
+      if(dx2>-80&&dx2<VW+80){
+        const arc=Math.sin(dt2*1.4)*30; // leap arc
+        ctx.save();ctx.translate(dx2,dy2-Math.max(0,arc));
+        ctx.fillStyle='#4488aa';
+        // body
+        ctx.beginPath();ctx.ellipse(0,0,38,14,Math.sin(dt2*.5)*.15,0,Math.PI*2);ctx.fill();
+        // belly
+        ctx.fillStyle='#aaccdd';
+        ctx.beginPath();ctx.ellipse(0,4,22,7,0,0,Math.PI*2);ctx.fill();
+        // dorsal fin
+        ctx.fillStyle='#336688';
+        ctx.beginPath();ctx.moveTo(-4,-14);ctx.lineTo(-12,-28);ctx.lineTo(4,-14);ctx.closePath();ctx.fill();
+        // tail
+        ctx.beginPath();ctx.moveTo(-36,0);ctx.lineTo(-48,-10);ctx.lineTo(-42,0);ctx.lineTo(-48,10);ctx.closePath();ctx.fill();
+        // snout beak
+        ctx.fillStyle='#4488aa';
+        ctx.beginPath();ctx.moveTo(38,0);ctx.lineTo(54,-3);ctx.lineTo(38,4);ctx.closePath();ctx.fill();
+        // eye
+        ctx.fillStyle='#1a1a1a';ctx.beginPath();ctx.arc(22,-4,4,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(23,-5,1.5,0,Math.PI*2);ctx.fill();
+        // splash when leaping
+        if(arc>5){
+          ctx.fillStyle='rgba(255,255,255,.5)';
+          ctx.beginPath();ctx.ellipse(0,dy2-dy2+Math.max(0,arc),18,5,0,0,Math.PI*2);ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // ── TROPICAL FISH (visible near surface) ───────────────
+    for(let f=0;f<6;f++){
+      const ft=t*0.5+f*1.7;
+      const [fx2,fy2]=w2s(300+f*450+Math.sin(ft*.4)*150, waveY+55+f*12);
+      if(fx2<-30||fx2>VW+30) continue;
+      const fishColors=['#ff8800','#ff4444','#ffcc00','#44ff88','#ff44cc','#44ccff'];
+      ctx.save();ctx.translate(fx2,fy2);ctx.globalAlpha=.65;
+      ctx.fillStyle=fishColors[f];
+      ctx.beginPath();ctx.ellipse(0,0,14,7,.1,0,Math.PI*2);ctx.fill();
+      // stripe
+      ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillRect(-2,-7,4,14);
+      // tail
+      ctx.fillStyle=fishColors[f];
+      ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(-22,-6);ctx.lineTo(-22,6);ctx.closePath();ctx.fill();
+      // eye
+      ctx.fillStyle='#1a1a1a';ctx.beginPath();ctx.arc(8,-1,2.5,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;ctx.restore();
+    }
+
+    // Surfboard drawn separately by surf system when not mounted
+  }
+
+  // ── Umbrellas ──
+  umbrellas.forEach(u=>{
+    if(!onScreen(u.x,u.y,u.r+20)) return;
+    const[sx,sy]=w2s(u.x,u.y);
+    ctx.save();ctx.translate(sx,sy);ctx.rotate(u.tilt);
+    // pole
+    ctx.strokeStyle='#c8a060';ctx.lineWidth=4;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-u.r*1.4);ctx.stroke();
+    // canopy segments
+    for(let seg=0;seg<8;seg++){
+      const a1=seg/8*Math.PI*2-Math.PI/2;
+      const a2=(seg+1)/8*Math.PI*2-Math.PI/2;
+      ctx.fillStyle=seg%2===0?u.color:'#fff';
+      ctx.beginPath();
+      ctx.moveTo(0,-u.r*.15);
+      ctx.arc(0,-u.r*.15,u.r,a1,a2);
+      ctx.closePath();ctx.fill();
+    }
+    // canopy outline + rim
+    ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,-u.r*.15,u.r,0,Math.PI*2);ctx.stroke();
+    // pole spike top
+    ctx.fillStyle='#c8a060';
+    ctx.beginPath();ctx.arc(0,-u.r*1.4,5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+
+  // ── Sandcastles ──
+  sandcastles.forEach(sc=>{
+    if(!onScreen(sc.x,sc.y,50)) return;
+    const[sx,sy]=w2s(sc.x,sc.y);
+    ctx.save();ctx.translate(sx,sy);
+    ctx.fillStyle='#d4a840';ctx.shadowColor='rgba(0,0,0,.2)';ctx.shadowBlur=5;
+    // base
+    ctx.beginPath();ctx.roundRect(-28,0,56,28,4);ctx.fill();
+    // tower
+    ctx.beginPath();ctx.roundRect(-18,-22,36,26,3);ctx.fill();
+    // battlements
+    [-14,-4,6,16].forEach(bx=>{ctx.beginPath();ctx.rect(bx,-30,8,10);ctx.fill();});
+    // flag
+    ctx.strokeStyle='#c89000';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(0,-30);ctx.lineTo(0,-48);ctx.stroke();
+    ctx.fillStyle='#ff4444';
+    ctx.beginPath();ctx.moveTo(0,-48);ctx.lineTo(14,-42);ctx.lineTo(0,-36);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.restore();
+  });
+}
+
+function drawBeachPerson(p){
+  if(!onScreen(p.x,p.y,60)) return;
+  const[sx,sy]=w2s(p.x,p.y);
+  ctx.save();ctx.translate(sx,sy);
+
+  // Nami-style: tall, super slim stick figure proportions
+  if(p.isNamiStyle){
+    drawNamiStyle(ctx,p);
+    ctx.restore(); return;
+  }
+
+  // Teen vs kid sizing
+  const s = p.isTeen ? 28 : 22;
+  const leg=p.state==='sit'||p.state==='idle'?0:Math.sin(p.animT*7)*s*.25;
+  const running = p.state==='run';
+  const legAmp = running ? s*.35 : s*.22;
+  const legSpd = running ? 10 : 7;
+  const legSwing = Math.sin(p.animT*legSpd)*legAmp;
+
+  // Teen: taller, slimmer limbs
+  const limbW = p.isTeen ? s*.16 : s*.22;
+  const legH  = p.isTeen ? s*.58 : s*.48;
+  const bodyH = p.isTeen ? s*.32 : s*.38;
+  const armW  = p.isTeen ? s*.13 : s*.18;
+
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath();ctx.ellipse(0,s*.95,s*.45,s*.13,0,0,Math.PI*2);ctx.fill();
+
+  if(p.state==='sit'){
+    ctx.fillStyle=p.swimColor;
+    ctx.beginPath();ctx.roundRect(-s*.4,-s*.05,s*.8,bodyH,s*.08);ctx.fill();
+    ctx.fillStyle=p.skinTone;
+    ctx.fillRect(-s*.3,s*.28,s*.6,s*.2);ctx.fillRect(s*.04,s*.28,s*.6,s*.2);
+    ctx.fillStyle=p.skinTone;ctx.beginPath();ctx.ellipse(0,-s*.42,s*.28,s*.3,0,0,Math.PI*2);ctx.fill();
+    drawBeachHair(ctx,p,s);drawBeachFace(ctx,p,s);
+  } else {
+    // Legs
+    ctx.fillStyle=p.skinTone;
+    ctx.fillRect(-limbW*1.2,s*.3-legSwing,limbW,legH);
+    ctx.fillRect(limbW*.1,s*.3+legSwing,limbW,legH);
+    // feet
+    ctx.beginPath();ctx.ellipse(-limbW*.5,s*.3+legH-legSwing,limbW*.9,s*.08,-.05,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(limbW*.6,s*.3+legH+legSwing,limbW*.9,s*.08,.05,0,Math.PI*2);ctx.fill();
+    // Swimsuit
+    if(p.isGirl){
+      ctx.fillStyle=p.swimColor;
+      ctx.beginPath();ctx.roundRect(-s*.3,-s*.05,s*.6,s*.18,s*.06);ctx.fill(); // bikini top
+      ctx.beginPath();ctx.roundRect(-s*.26,s*.2,s*.52,s*.12,s*.05);ctx.fill(); // bikini bottom
+    } else {
+      ctx.fillStyle=p.swimColor;
+      // board shorts with waistband
+      ctx.beginPath();ctx.roundRect(-s*.3,s*.18,s*.6,s*.26,s*.07);ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(-s*.3,s*.18,s*.6,s*.06);
+    }
+    // Torso skin (between swimsuit pieces for girl)
+    ctx.fillStyle=p.skinTone;
+    if(p.isGirl){ctx.fillRect(-s*.25,s*.13,s*.5,s*.08);}
+    else{ctx.beginPath();ctx.roundRect(-s*.28,-s*.05,s*.56,s*.24,s*.06);ctx.fill();}
+    // Arms
+    ctx.fillStyle=p.skinTone;
+    if(p.state==='wave'){
+      ctx.fillRect(-s*.5,-s*.04+legSwing*.3,armW,s*.32);
+      ctx.save();ctx.translate(s*.38,-s*.04);ctx.rotate(-.95+Math.sin(p.animT*4)*.22);
+      ctx.fillRect(-armW*.3,-s*.36,armW,s*.36);ctx.restore();
+    } else {
+      const armSwing = running ? legSwing*-.6 : legSwing*.4;
+      ctx.fillRect(-s*.48,-s*.04+armSwing,armW,s*.34);
+      ctx.fillRect(s*.32,-s*.04-armSwing,armW,s*.34);
+    }
+    // Head
+    ctx.fillStyle=p.skinTone;
+    ctx.beginPath();ctx.ellipse(0,-s*.44,s*.28,s*.3,0,0,Math.PI*2);ctx.fill();
+    drawBeachHair(ctx,p,s);
+    drawBeachFace(ctx,p,s);
+  }
+  ctx.fillStyle='rgba(0,0,0,.5)';ctx.font='9px Fredoka One,cursive';
+  ctx.textAlign='center';ctx.fillText(p.name,0,s*1.05);
+  ctx.restore();
+}
+
+// ── Nami-style: tall, orange hair, VERY slim stick figure ──
+function drawNamiStyle(ctx,p){
+  const s=36; // tall
+  const leg=Math.sin(p.animT*6)*s*.28;
+  ctx.save();
+
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath();ctx.ellipse(0,s*.95,s*.35,s*.1,0,0,Math.PI*2);ctx.fill();
+
+  // stick-slim LONG legs
+  ctx.strokeStyle=p.skinTone;ctx.lineWidth=s*.13;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-s*.08,s*.32-leg);ctx.lineTo(-s*.1,s*.32+s*.7-leg);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.08,s*.32+leg);ctx.lineTo(s*.1,s*.32+s*.7+leg);ctx.stroke();
+  // tiny feet
+  ctx.fillStyle=p.skinTone;
+  ctx.beginPath();ctx.ellipse(-s*.1,s*1.02-leg,s*.12,s*.06,-.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.1,s*1.02+leg,s*.12,s*.06,.1,0,Math.PI*2);ctx.fill();
+
+  // orange bikini bottom
+  ctx.fillStyle=p.swimColor;
+  ctx.beginPath();ctx.roundRect(-s*.2,s*.28,s*.4,s*.1,s*.04);ctx.fill();
+
+  // slim waist + orange bikini top
+  ctx.fillStyle=p.skinTone;ctx.fillRect(-s*.13,s*.0,s*.26,s*.3);
+  ctx.fillStyle=p.swimColor;
+  ctx.beginPath();ctx.roundRect(-s*.22,-s*.04,s*.44,s*.13,s*.05);ctx.fill();
+
+  // slim arms — one raised sassy
+  ctx.strokeStyle=p.skinTone;ctx.lineWidth=s*.11;
+  ctx.beginPath();ctx.moveTo(-s*.22,-s*.02);ctx.lineTo(-s*.38,s*.22+leg*.2);ctx.stroke();
+  // right arm raised with hand on hip
+  ctx.beginPath();ctx.moveTo(s*.22,-s*.02);ctx.quadraticCurveTo(s*.44,-s*.1,s*.38,s*.18);ctx.stroke();
+
+  // neck slim
+  ctx.strokeStyle=p.skinTone;ctx.lineWidth=s*.1;
+  ctx.beginPath();ctx.moveTo(0,-s*.04);ctx.lineTo(0,-s*.18);ctx.stroke();
+
+  // HEAD — slightly small (tall body ratio)
+  ctx.fillStyle=p.skinTone;ctx.shadowColor='rgba(0,0,0,.1)';ctx.shadowBlur=4;
+  ctx.beginPath();ctx.ellipse(0,-s*.42,s*.26,s*.27,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+
+  // ears
+  ctx.fillStyle='#e8b090';
+  ctx.beginPath();ctx.ellipse(-s*.26,-s*.42,s*.07,s*.1,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.26,-s*.42,s*.07,s*.1,0,0,Math.PI*2);ctx.fill();
+
+  // ── ORANGE HAIR — shoulder length, wavy ──
+  ctx.fillStyle='#ff7700';ctx.shadowColor='#ff5500';ctx.shadowBlur=3;
+  // main mass on top
+  ctx.beginPath();ctx.ellipse(0,-s*.6,s*.28,s*.16,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-s*.28,-s*.6,s*.56,s*.14);
+  // side waves draping to shoulders
+  ctx.beginPath();ctx.ellipse(-s*.28,-s*.44,s*.1,s*.26,-.15,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.28,-s*.44,s*.1,s*.26,.15,0,Math.PI*2);ctx.fill();
+  // flowing ends
+  ctx.beginPath();ctx.ellipse(-s*.24,-s*.22,s*.08,s*.16,-.2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.24,-s*.22,s*.08,s*.16,.2,0,Math.PI*2);ctx.fill();
+  // hair highlight
+  ctx.fillStyle='#ffaa00';ctx.shadowBlur=0;
+  ctx.beginPath();ctx.ellipse(-s*.06,-s*.64,s*.1,s*.07,-.3,0,Math.PI*2);ctx.fill();
+
+  // Eyes — large, expressive
+  ctx.fillStyle='#2a1a08';
+  ctx.beginPath();ctx.ellipse(-s*.1,-s*.44,s*.09,s*.08,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.1,-s*.44,s*.09,s*.08,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#4a6a30'; // brown-green eye color
+  ctx.beginPath();ctx.arc(-s*.1,-s*.44,s*.05,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.1,-s*.44,s*.05,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.06,-s*.47,s*.025,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.14,-s*.47,s*.025,0,Math.PI*2);ctx.fill();
+  // lashes
+  ctx.strokeStyle='#1a1a1a';ctx.lineWidth=s*.025;
+  [-s*.16,-s*.1,-s*.04].forEach(lx=>{ctx.beginPath();ctx.moveTo(lx,-s*.5);ctx.lineTo(lx-s*.02,-s*.56);ctx.stroke();});
+  [s*.04,s*.1,s*.16].forEach(lx=>{ctx.beginPath();ctx.moveTo(lx,-s*.5);ctx.lineTo(lx+s*.02,-s*.56);ctx.stroke();});
+  // eyebrows arched
+  ctx.strokeStyle='#cc5500';ctx.lineWidth=s*.04;ctx.lineCap='round';
+  ctx.beginPath();ctx.arc(-s*.1,-s*.56,s*.1,Math.PI*.85,Math.PI*.1+Math.PI);ctx.stroke();
+  ctx.beginPath();ctx.arc(s*.1,-s*.56,s*.1,Math.PI*.9,Math.PI*.0);ctx.stroke();
+  // cute small nose
+  ctx.fillStyle='#c07858';
+  ctx.beginPath();ctx.arc(0,-s*.36,s*.03,0,Math.PI*2);ctx.fill();
+  // smile
+  ctx.strokeStyle='#c07858';ctx.lineWidth=s*.04;
+  ctx.beginPath();ctx.arc(0,-s*.3,s*.08,.15,Math.PI-.15);ctx.stroke();
+
+  // name
+  ctx.fillStyle='#ff5500';ctx.font='bold 10px Fredoka One,cursive';
+  ctx.textAlign='center';ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=3;
+  ctx.fillText('Nami',0,s*1.1);
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+function drawBeachHair(ctx,p,s){
+  ctx.fillStyle=p.hairColor;
+  if(p.isGirl){
+    // long hair
+    ctx.beginPath();ctx.ellipse(0,-s*.62,s*.38,s*.22,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(-s*.34,-s*.45,s*.14,s*.3,-.3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(s*.34,-s*.45,s*.14,s*.3,.3,0,Math.PI*2);ctx.fill();
+  } else {
+    // short hair
+    ctx.beginPath();ctx.ellipse(0,-s*.64,s*.35,s*.18,0,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(-s*.35,-s*.64,s*.7,s*.14);
+  }
+}
+
+function drawBeachFace(ctx,p,s){
+  // eyes
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();ctx.ellipse(-s*.12,-s*.44,s*.07,s*.055,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.12,-s*.44,s*.07,s*.055,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.09,-s*.46,s*.025,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.15,-s*.46,s*.025,0,Math.PI*2);ctx.fill();
+  // smile
+  ctx.strokeStyle='#c07858';ctx.lineWidth=s*.055;ctx.lineCap='round';
+  ctx.beginPath();ctx.arc(0,-s*.33,s*.1,.1,Math.PI-.1);ctx.stroke();
+}
+
+// Update beach people animation
+function updateBeach(dt){
+  if(gstate!=='playing') return;
+  // Tick wave cycle even when not surfing (so timing is consistent)
+  if(!surfboard.mounted){
+    waveCycleCooldown -= dt;
+    if(waveCycleCooldown <= 0 && !waveCycleActive){
+      waveCycleActive=true; waveCycleTimer=WAVE_CYCLE_DURATION;
+      bigWave.active=true; bigWave.worldY=WATER_WORLD_Y+350;
+      addFloat(player.x,player.y-60,'🌊 Big wave coming!','#00ccff');
+      waveCycleCooldown=WAVE_CYCLE_INTERVAL;
+    }
+    if(waveCycleActive){
+      waveCycleTimer-=dt;
+      bigWave.worldY-=bigWave.speed*dt;
+      if(bigWave.worldY<WATER_WORLD_Y+10||waveCycleTimer<=0){
+        bigWave.active=false; waveCycleActive=false; bigWave.worldY=WATER_WORLD_Y+60;
+      }
+    }
+  }
+  beachPeople.forEach(p=>{
+    p.animT+=dt;
+    const spd=p.speed||30;
+    if(p.state==='walk'||p.state==='run'){
+      p.walkT-=dt;
+      p.x+=p.dir*spd*dt;
+      if(p.walkT<=0||p.x<180||p.x>WORLD_W-180){
+        p.dir*=-1; p.walkT=1.5+Math.random()*3;
+      }
+    }
+    // Nami-style wanders near shoreline
+    if(p.isNamiStyle){
+      p.x+=p.dir*38*dt;
+      if(p.x<200||p.x>WORLD_W-200) p.dir*=-1;
+      p.y=2560+Math.sin(p.animT*.3)*30; // gentle y drift
+    }
+    // React if bigfoot comes near beach!
+    const db=Math.hypot(p.x-bigfoot.x,p.y-bigfoot.y);
+    if(db<240&&!bigfoot.isCamo){
+      p.state='run'; p.dir=p.x<bigfoot.x?-1:1;
+    }
+  });
+}
+
 function drawGround(){
   ctx.fillStyle='#5a8a32'; ctx.fillRect(0,0,VW,VH);
   // grass tufts tiling
@@ -881,6 +1486,113 @@ function drawCamper(sx,sy,s){
   ctx.restore();
 }
 
+// ── PIKACHU ──────────────────────────────────────────────
+function drawPikachu(sx, sy, s, animT){
+  ctx.save();
+  ctx.translate(sx, sy);
+  // bounce bob
+  const bob = Math.sin(animT*6)*s*.12;
+  ctx.translate(0, bob);
+
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.18)';
+  ctx.beginPath();ctx.ellipse(0,s*.95,s*.55,s*.15,0,0,Math.PI*2);ctx.fill();
+
+  // tail — zigzag lightning bolt
+  ctx.fillStyle='#f5c800';
+  ctx.save();ctx.translate(s*.55,s*.1);ctx.rotate(.3);
+  ctx.beginPath();
+  ctx.moveTo(0,-s*.5);
+  ctx.lineTo(s*.28,-s*.1);
+  ctx.lineTo(s*.05,-s*.05);
+  ctx.lineTo(s*.35,s*.35);
+  ctx.lineTo(s*.08,s*.25);
+  ctx.lineTo(s*.15,s*.5);
+  ctx.lineTo(-s*.12,s*.2);
+  ctx.lineTo(s*.05,s*.1);
+  ctx.lineTo(-s*.2,-s*.3);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#c89000';ctx.lineWidth=s*.06;ctx.stroke();
+  ctx.restore();
+
+  // body — chubby yellow
+  ctx.fillStyle='#f5d020';
+  ctx.shadowColor='rgba(0,0,0,.2)';ctx.shadowBlur=6;
+  ctx.beginPath();ctx.ellipse(0,s*.15,s*.52,s*.58,0,0,Math.PI*2);ctx.fill();
+
+  // brown back stripe
+  ctx.fillStyle='#c89000';
+  ctx.beginPath();
+  ctx.moveTo(-s*.35,s*.0);
+  ctx.quadraticCurveTo(0,-s*.1,s*.35,s*.0);
+  ctx.quadraticCurveTo(s*.4,s*.5,0,s*.55);
+  ctx.quadraticCurveTo(-s*.4,s*.5,-s*.35,s*.0);
+  ctx.fill();
+
+  // belly cream patch
+  ctx.fillStyle='#fdf0a0';
+  ctx.beginPath();ctx.ellipse(0,s*.22,s*.28,s*.3,0,0,Math.PI*2);ctx.fill();
+
+  // red cheek circles (electric pouches!)
+  ctx.fillStyle='#ff4444';ctx.shadowColor='#ff0000';ctx.shadowBlur=8;
+  ctx.beginPath();ctx.arc(-s*.38,s*.08,s*.2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.38,s*.08,s*.2,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+
+  // arms
+  ctx.fillStyle='#f5d020';
+  ctx.beginPath();ctx.ellipse(-s*.6,s*.08,s*.16,s*.28,-.35,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.6,s*.08,s*.16,s*.28,.35,0,Math.PI*2);ctx.fill();
+
+  // feet
+  ctx.fillStyle='#c89000';
+  ctx.beginPath();ctx.ellipse(-s*.22,s*.72,s*.2,s*.12,-.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.22,s*.72,s*.2,s*.12,.1,0,Math.PI*2);ctx.fill();
+  // toe lines
+  ctx.strokeStyle='#a07000';ctx.lineWidth=s*.04;
+  [-s*.3,-s*.22,-s*.14].forEach(tx=>{
+    ctx.beginPath();ctx.moveTo(tx+s*.08,s*.72);ctx.lineTo(tx+s*.08,s*.82);ctx.stroke();
+  });
+  [s*.14,s*.22,s*.30].forEach(tx=>{
+    ctx.beginPath();ctx.moveTo(tx,s*.72);ctx.lineTo(tx,s*.82);ctx.stroke();
+  });
+
+  // head
+  ctx.fillStyle='#f5d020';ctx.shadowColor='rgba(0,0,0,.15)';ctx.shadowBlur=5;
+  ctx.beginPath();ctx.ellipse(0,-s*.42,s*.44,s*.42,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+
+  // ears — black tips
+  ctx.fillStyle='#f5d020';
+  ctx.beginPath();ctx.moveTo(-s*.28,-s*.72);ctx.lineTo(-s*.44,-s*1.22);ctx.lineTo(-s*.12,-s*.82);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(s*.28,-s*.72);ctx.lineTo(s*.44,-s*1.22);ctx.lineTo(s*.12,-s*.82);ctx.closePath();ctx.fill();
+  // black ear tips
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();ctx.moveTo(-s*.28,-s*.94);ctx.lineTo(-s*.44,-s*1.22);ctx.lineTo(-s*.18,-s*1.0);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(s*.28,-s*.94);ctx.lineTo(s*.44,-s*1.22);ctx.lineTo(s*.18,-s*1.0);ctx.closePath();ctx.fill();
+
+  // eyes — big shiny black dots
+  ctx.fillStyle='#1a1a1a';ctx.shadowColor='#000';ctx.shadowBlur=3;
+  ctx.beginPath();ctx.arc(-s*.16,-s*.46,s*.12,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.16,-s*.46,s*.12,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  // eye shine
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(-s*.11,-s*.5,s*.05,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(s*.21,-s*.5,s*.05,0,Math.PI*2);ctx.fill();
+
+  // nose — tiny brown dot
+  ctx.fillStyle='#8a5a00';
+  ctx.beginPath();ctx.arc(0,-s*.35,s*.04,0,Math.PI*2);ctx.fill();
+
+  // mouth — happy W shape
+  ctx.strokeStyle='#8a5a00';ctx.lineWidth=s*.05;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-s*.12,-s*.28);ctx.quadraticCurveTo(-s*.06,-s*.22,0,-s*.26);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-s*.26);ctx.quadraticCurveTo(s*.06,-s*.22,s*.12,-s*.28);ctx.stroke();
+
+  ctx.restore();
+}
+
 // ── RANGER ───────────────────────────────────────────────
 function drawRanger(sx,sy,s,anim,alertTimer){
   ctx.save();ctx.translate(sx,sy);
@@ -932,6 +1644,14 @@ const followers = [
   {x:WORLD_W/2-60,y:WORLD_H/2+60,speed:230,r:26,animT:0,draw:drawKidB},
   {x:WORLD_W/2+60,y:WORLD_H/2+60,speed:230,r:24,animT:0,draw:drawKidC},
 ];
+
+// ── 10 PIKACHU FOLLOWERS ─────────────────────────────────
+const pikachus = Array.from({length:10}, (_,i) => ({
+  x: WORLD_W/2 + Math.cos(i/10*Math.PI*2)*80,
+  y: WORLD_H/2 + Math.sin(i/10*Math.PI*2)*80,
+  speed: 240, r: 18, animT: i*0.4,
+  bounceT: i*0.6,
+}));
 const bigfoot = {
   x:400,y:400,speed:155,r:32,animT:0,
   state:'wander',target:null,
@@ -956,8 +1676,9 @@ const ranger = {
 // ── UPDATE PLAYER ─────────────────────────────────────────
 function updatePlayer(dt){
   if(gstate!=='playing') return;
-  // Block world movement when any overlay is open
+  // Block world movement when any overlay is open OR surfing
   if(tentOverlayOpen||grillOverlayOpen||coolerOverlayOpen) return;
+  if(surfboard&&surfboard.mounted) return; // surfboard handles movement
   let vx=0,vy=0;
   if(keys['ArrowLeft']||keys['a']) vx-=1;
   if(keys['ArrowRight']||keys['d']) vx+=1;
@@ -971,8 +1692,11 @@ function updatePlayer(dt){
   if(len>0){
     player.animT+=dt;
     vx/=len;vy/=len;
-    const nx=player.x+vx*player.speed*dt;
-    const ny=player.y+vy*player.speed*dt;
+    // Slow to 60% in water (wading), normal speed on land
+    const waterSlow = isInWater(player.y) ? 0.6 : 1.0;
+    const moveSpd = player.speed * waterSlow;
+    const nx=player.x+vx*moveSpd*dt;
+    const ny=player.y+vy*moveSpd*dt;
     if(!isBlocked(nx,player.y,player.r)) player.x=nx;
     if(!isBlocked(player.x,ny,player.r)) player.y=ny;
     player.x=Math.max(player.r,Math.min(WORLD_W-player.r,player.x));
@@ -989,11 +1713,29 @@ function updateFollowers(dt){
     const dx=ldr.x-f.x,dy=ldr.y-f.y,d=Math.hypot(dx,dy);
     if(d>60){
       f.animT+=dt;
-      const spd=f.speed;
+      const waterSlow=isInWater(f.y)?0.6:1.0;
+      const spd=f.speed*waterSlow;
       const nx=f.x+dx/d*spd*dt, ny=f.y+dy/d*spd*dt;
       if(!isBlocked(nx,f.y,f.r)) f.x=nx;
       if(!isBlocked(f.x,ny,f.r)) f.y=ny;
     }
+  });
+
+  // Update pikachus — chain from last kid follower
+  const pkChain=[player,...followers,...pikachus];
+  pikachus.forEach((pk,i)=>{
+    pk.animT+=dt;pk.bounceT+=dt;
+    const ldr=pkChain[i+2]; // follow 2 slots ahead
+    const dx=ldr.x-pk.x,dy=ldr.y-pk.y,d=Math.hypot(dx,dy);
+    if(d>50){
+      const waterSlow=isInWater(pk.y)?0.5:1.0; // pikachus really hate water!
+      const spd=pk.speed*waterSlow;
+      const nx=pk.x+dx/d*spd*dt, ny=pk.y+dy/d*spd*dt;
+      if(!isBlocked(nx,pk.y,pk.r)) pk.x=nx;
+      if(!isBlocked(pk.x,ny,pk.r)) pk.y=ny;
+    }
+    pk.x=Math.max(pk.r,Math.min(WORLD_W-pk.r,pk.x));
+    pk.y=Math.max(pk.r,Math.min(WORLD_H-pk.r,pk.y));
   });
 }
 
@@ -1139,7 +1881,7 @@ function updateBigfoot(dt){
 
   // Tag check — camo bigfoot CAN still be tagged (reveals them!)
   const tagD=sf.isCamo?58:52; // slightly easier to tag when disguised
-  const allKids=[player,...followers];
+  const allKids=[player,...followers,...pikachus];
   if(sf.stunTimer<=0&&allKids.some(k=>dist(sf,k)<tagD)){
     if(sf.isCamo){ sf.isCamo=false; sf.camoBlinkTimer=0; addFloat(sf.x,sf.y-30,'Disguise blown! 🎭','#ff8844'); }
     sf.stunTimer=2.8;sf.foodCarried=null;
@@ -1204,6 +1946,11 @@ function drawMinimap(){
   ctx.fillStyle='#3a78d0';ctx.beginPath();ctx.arc(sx(followers[0].x),sy(followers[0].y),3,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#d95a28';ctx.beginPath();ctx.arc(sx(followers[1].x),sy(followers[1].y),3,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#4a7a28';ctx.beginPath();ctx.arc(sx(ranger.x),sy(ranger.y),3,0,Math.PI*2);ctx.fill();
+  // Pikachu dots — yellow
+  ctx.fillStyle='#f5d020';
+  pikachus.forEach(pk=>{
+    ctx.beginPath();ctx.arc(sx(pk.x),sy(pk.y),2.5,0,Math.PI*2);ctx.fill();
+  });
   ctx.strokeStyle='rgba(255,255,0,.5)';ctx.lineWidth=1;
   ctx.strokeRect(sx(cam.x),sy(cam.y),VW/WORLD_W*mw,VH/WORLD_H*mh);
   // legend
@@ -1249,6 +1996,8 @@ function drawTitle(){
   ctx.fillStyle='#ddd';ctx.font=`14px Nunito,sans-serif`;
   ctx.fillText('Arrow keys / WASD  or  Click / Tap to move',VW/2,VH/2+60);
   ctx.fillText('Blue & Orange follow automatically',VW/2,VH/2+85);
+  ctx.fillStyle='#f5d020';
+  ctx.fillText('+ 10 Pikachu join the hunt! ⚡',VW/2,VH/2+110);
   // button pulse
   const p=.96+Math.sin(Date.now()*.003)*.04;
   ctx.save();ctx.translate(VW/2,VH/2+150);ctx.scale(p,p);
@@ -1290,7 +2039,7 @@ function loop(ts){
     drawGround();rocks.forEach(drawRock);bushes.forEach(drawBush);trees.forEach(drawTree);
     drawEnd(gstate==='win');requestAnimationFrame(loop);return;
   }
-  updatePlayer(dt);updateFollowers(dt);updateBigfoot(dt);updateRanger(dt);
+  updatePlayer(dt);updateFollowers(dt);updateBigfoot(dt);updateRanger(dt);updateBeach(dt);
   updateCamera(player);
   for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=.07;p.life-=p.decay;}
   particles=particles.filter(p=>p.life>0);
@@ -1299,6 +2048,7 @@ function loop(ts){
 
   // Draw world
   drawGround();
+  drawBeach();
   rocks.forEach(drawRock);
   tables.forEach(drawTable);
   bushes.forEach(drawBush);
@@ -1313,6 +2063,8 @@ function loop(ts){
     {y:followers[0].y, fn:()=>{const[sx,sy]=w2s(followers[0].x,followers[0].y);drawKidB(sx,sy,followers[0].r,followers[0].animT);}},
     {y:followers[1].y, fn:()=>{const[sx,sy]=w2s(followers[1].x,followers[1].y);drawKidC(sx,sy,followers[1].r,followers[1].animT);}},
     {y:ranger.y,    fn:()=>{const[sx,sy]=w2s(ranger.x,ranger.y);drawRanger(sx,sy,ranger.r,ranger.animT,ranger.alertTimer);}},
+    ...pikachus.map(pk=>({y:pk.y, fn:()=>{const[sx,sy]=w2s(pk.x,pk.y);drawPikachu(sx,sy,pk.r,pk.animT);}})),
+    ...beachPeople.map(p=>({y:p.y, fn:()=>drawBeachPerson(p)})),
   ];
   chars.sort((a,b)=>a.y-b.y).forEach(c=>c.fn());
   trees.forEach(drawTree); // trees overdraw base
@@ -1394,7 +2146,13 @@ function startGame(){
   const _f1=findSafeSpot(player.x+70,player.y+70,followers[1].r);
   followers[1].x=_f1.x;followers[1].y=_f1.y;followers[1].animT=0;
   const _bfs=findSafeSpot(500,500,bigfoot.r);
-  bigfoot.x=_bfs.x;bigfoot.y=_bfs.y;bigfoot.state='wander';bigfoot.stunTimer=0;bigfoot.foodCarried=null;bigfoot.hideTimer=0;bigfoot.hidingTreeIdx=-1;bigfoot.hideAlpha=1;bigfoot.camoTimer=0;bigfoot.camoBlinkTimer=0;bigfoot.isCamo=false;
+  bigfoot.x=_bfs.x;bigfoot.y=_bfs.y;bigfoot.state='wander';
+  // Reset pikachus in a cluster behind player start
+  pikachus.forEach((pk,i)=>{
+    const a=i/10*Math.PI*2;
+    const sp=findSafeSpot(player.x+Math.cos(a)*90, player.y+Math.sin(a)*90+80, pk.r);
+    pk.x=sp.x; pk.y=sp.y; pk.animT=i*0.4; pk.bounceT=i*0.6;
+  });bigfoot.stunTimer=0;bigfoot.foodCarried=null;bigfoot.hideTimer=0;bigfoot.hidingTreeIdx=-1;bigfoot.hideAlpha=1;bigfoot.camoTimer=0;bigfoot.camoBlinkTimer=0;bigfoot.isCamo=false;
   const _rs=findSafeSpot(2800,2000,ranger.r);
   ranger.x=_rs.x;ranger.y=_rs.y;ranger.state='patrol';ranger.alertTimer=0;ranger.patrolIdx=0;
   gstate='playing';
@@ -2734,6 +3492,1239 @@ document.addEventListener('keydown',e=>{
     if(coolerOverlayOpen)closeCoolerOverlay();
     if(tentOverlayOpen)closeTentOverlay();
   }
+});
+
+
+// ══════════════════════════════════════════════════════════
+// ── PIKACHU SCATTER MECHANIC ──────────────────────────────
+// ══════════════════════════════════════════════════════════
+const SCATTER_COOLDOWN = 18; // seconds
+const SCATTER_SNIFF_RANGE = 380; // how close pikachus need to be to sniff camo
+let scatterCooldown = 0;       // current cooldown remaining
+let scatterActive = false;     // scatter animation playing
+let scatterTimer = 0;          // how long the scatter animation lasts
+let pikaScatterTargets = [];   // target positions during scatter
+
+// Scatter canvas for cooldown arc
+const scCanvas = document.getElementById('scatter-canvas');
+const scCtx = scCanvas.getContext('2d');
+scCanvas.width = 72; scCanvas.height = 72;
+
+function triggerScatter(){
+  if(scatterCooldown > 0 || gstate !== 'playing') return;
+  scatterCooldown = SCATTER_COOLDOWN;
+  scatterActive = true;
+  scatterTimer = 2.5; // 2.5 seconds of scatter animation
+
+  const bf = bigfoot;
+
+  // ── Case 1: Bigfoot is DISGUISED — pikachus sniff him out ──
+  if(bf.isCamo){
+    // All pikachus charge at bigfoot
+    pikaScatterTargets = pikachus.map(() => ({
+      x: bf.x + (Math.random()-.5)*60,
+      y: bf.y + (Math.random()-.5)*60,
+      mode: 'sniff'
+    }));
+    // Blow the disguise after 1 second
+    setTimeout(()=>{
+      if(bf.isCamo){
+        bf.isCamo=false; bf.camoBlinkTimer=0;
+        addFloat(bf.x,bf.y-60,'⚡ PIKACHU SNIFFED HIM OUT! 🔍','#ffe44d');
+        burst(bf.x,bf.y,'#ffe44d',28);
+        burst(bf.x,bf.y,'#ff4444',16);
+        // Stun bigfoot briefly
+        bf.stunTimer=1.5;
+      }
+    }, 1000);
+    addFloat(player.x,player.y-50,'⚡ PIKACHUS — SNIFF HIM OUT!','#ffe44d');
+    showScatterFeedback('sniff');
+  }
+  // ── Case 2: Bigfoot is hiding in tree ──
+  else if(bf.hideTimer > 0){
+    // Pikachus surround the tree
+    const treeIdx = bf.hidingTreeIdx;
+    const tree = treeIdx >= 0 ? trees[treeIdx] : null;
+    pikaScatterTargets = pikachus.map((_,i) => {
+      const angle = (i/pikachus.length)*Math.PI*2;
+      const tx = tree ? tree.x + Math.cos(angle)*( tree.r+30) : bf.x + Math.cos(angle)*80;
+      const ty = tree ? tree.y + Math.sin(angle)*(tree.r+30) : bf.y + Math.sin(angle)*80;
+      return {x:tx, y:ty, mode:'surround'};
+    });
+    // Force bigfoot out of hiding
+    setTimeout(()=>{
+      bf.hideTimer=0; bf.hidingTreeIdx=-1; bf.hideAlpha=1;
+      const safe=findSafeSpot(bf.x,bf.y+60,bf.r,60);
+      bf.x=safe.x; bf.y=safe.y; bf.state='flee';
+      addFloat(bf.x,bf.y-50,'⚡ FLUSHED OUT! 🌲','#ffe44d');
+      burst(bf.x,bf.y,'#88ff44',20);
+    }, 800);
+    addFloat(player.x,player.y-50,'⚡ PIKACHUS — SURROUND THE TREE!','#ffe44d');
+    showScatterFeedback('surround');
+  }
+  // ── Case 3: Bigfoot is visible — scatter in a pincer ──
+  else {
+    const angle = Math.atan2(bf.y-player.y, bf.x-player.x);
+    pikaScatterTargets = pikachus.map((_,i) => {
+      // Fan out in an arc toward bigfoot
+      const spread = (i/pikachus.length - 0.5) * Math.PI * 1.4;
+      const dist2 = 100 + Math.random()*80;
+      return {
+        x: bf.x + Math.cos(angle+spread+Math.PI)*dist2,
+        y: bf.y + Math.sin(angle+spread+Math.PI)*dist2,
+        mode: 'chase'
+      };
+    });
+    addFloat(player.x,player.y-50,'⚡ PIKACHUS — GET HIM!','#ffe44d');
+    showScatterFeedback('chase');
+  }
+  updateScatterBtn();
+}
+
+function showScatterFeedback(mode){
+  const msgs = {
+    sniff: '🔍 Sniffing out the disguise...',
+    surround: '🌲 Surrounding the tree...',
+    chase: '⚡ Pikachus charging in!'
+  };
+  setMsg(msgs[mode] || '⚡ SCATTER!');
+}
+
+function updateScatterBtn(){
+  const btn = document.getElementById('scatter-btn');
+  const hud = document.getElementById('scatter-hud');
+  const cdEl = document.getElementById('scatter-cd');
+  if(gstate !== 'playing'){
+    btn.style.display='none'; hud.style.display='none'; return;
+  }
+  btn.style.display='block';
+  hud.style.display='flex';
+  scCanvas.style.display='block';
+  if(scatterCooldown > 0){
+    btn.classList.add('cooldown');
+    cdEl.textContent = Math.ceil(scatterCooldown)+'s';
+    // Draw cooldown arc
+    scCtx.clearRect(0,0,72,72);
+    const frac = scatterCooldown / SCATTER_COOLDOWN;
+    scCtx.strokeStyle='rgba(255,255,255,.35)';
+    scCtx.lineWidth=5; scCtx.lineCap='round';
+    scCtx.beginPath();
+    scCtx.arc(36,36,32,-Math.PI/2,-Math.PI/2+frac*Math.PI*2);
+    scCtx.stroke();
+  } else {
+    btn.classList.remove('cooldown');
+    cdEl.textContent='Ready!';
+    scCtx.clearRect(0,0,72,72);
+  }
+}
+
+// Override updateFollowers to handle scatter mode for pikachus
+const _origUpdateFollowers = updateFollowers;
+updateFollowers = function(dt){
+  _origUpdateFollowers(dt);
+  if(gstate !== 'playing' || tentOverlayOpen||grillOverlayOpen||coolerOverlayOpen) return;
+
+  // Cooldown tick
+  if(scatterCooldown > 0){
+    scatterCooldown = Math.max(0, scatterCooldown - dt);
+    updateScatterBtn();
+  }
+  if(scatterTimer > 0) scatterTimer -= dt;
+  else { scatterActive = false; pikaScatterTargets = []; }
+
+  // Scatter override movement
+  if(scatterActive && pikaScatterTargets.length){
+    pikachus.forEach((pk, i) => {
+      const tgt = pikaScatterTargets[i];
+      if(!tgt) return;
+      const dx=tgt.x-pk.x, dy=tgt.y-pk.y, d=Math.hypot(dx,dy);
+      if(d > 8){
+        const spd = pk.speed * 1.8; // sprint speed during scatter
+        const nx=pk.x+dx/d*spd*dt, ny=pk.y+dy/d*spd*dt;
+        if(!isBlocked(nx,pk.y,pk.r)) pk.x=nx;
+        if(!isBlocked(pk.x,ny,pk.r)) pk.y=ny;
+      }
+    });
+  }
+
+  // Passive sniff detection — even without scatter button,
+  // if bigfoot is in camo and 3+ pikachus are close, they get suspicious
+  if(bigfoot.isCamo && !scatterActive){
+    const closeCount = pikachus.filter(pk=>
+      Math.hypot(pk.x-bigfoot.x,pk.y-bigfoot.y) < SCATTER_SNIFF_RANGE * .4
+    ).length;
+    if(closeCount >= 3){
+      // Pikachus start glowing/reacting
+      pikachus.forEach(pk=>{
+        if(Math.hypot(pk.x-bigfoot.x,pk.y-bigfoot.y) < SCATTER_SNIFF_RANGE*.4){
+          pk._suspect = true;
+        }
+      });
+    }
+  } else {
+    pikachus.forEach(pk=>{ pk._suspect=false; });
+  }
+};
+
+// Draw scatter electricity on pikachus during scatter
+const _origDrawPikachu = drawPikachu;
+drawPikachu = function(sx,sy,s,animT){
+  const pk = pikachus.find(p=>{
+    const[wx,wy]=w2s(p.x,p.y);
+    return Math.abs(wx-sx)<2 && Math.abs(wy-sy)<2;
+  });
+  _origDrawPikachu(sx,sy,s,animT);
+  if(!pk) return;
+
+  // Scatter sparks
+  if(scatterActive){
+    ctx.save();ctx.translate(sx,sy);
+    for(let i=0;i<4;i++){
+      const a=Date.now()*.005+i*Math.PI/2+animT;
+      const r2=s*.9+Math.sin(Date.now()*.01+i)*s*.3;
+      ctx.strokeStyle=`rgba(255,240,80,${.6+Math.sin(a)*.4})`;
+      ctx.lineWidth=s*.1; ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a)*r2*.5,Math.sin(a)*r2*.5);
+      ctx.lineTo(Math.cos(a)*r2,Math.sin(a)*r2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // Suspect glow (passive sniff)
+  if(pk._suspect){
+    ctx.save();ctx.translate(sx,sy);
+    ctx.strokeStyle=`rgba(255,80,80,${.4+Math.sin(Date.now()*.006)*.3})`;
+    ctx.lineWidth=3; ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.arc(0,-s*.4,s*.6,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font=`${s*.5}px serif`;ctx.textAlign='center';
+    ctx.fillText('❓',0,-s*1.1);
+    ctx.restore();
+  }
+};
+
+// Show button when game starts, hide on end
+const _origStartGame = startGame;
+startGame = function(){
+  _origStartGame();
+  scatterCooldown=0; scatterActive=false; scatterTimer=0; pikaScatterTargets=[];
+  waveCycleCooldown=10; waveCycleActive=false; bigWave.active=false;
+  updateScatterBtn();
+};
+
+
+// ══════════════════════════════════════════════════════════
+// ── MANGA DIALOG SYSTEM ───────────────────────────────────
+// ══════════════════════════════════════════════════════════
+const TALK_DIST = 120;
+let nearbyTalkChar = null;
+let mangaOpen = false;
+let mangaChar = null;
+let mangaLineIdx = 0;
+
+const NAMI_DIALOG = [
+  { speaker:'Nami', text:"Oh! You found Bigfoot's trail?\nThat's incredible — I've been tracking him too!" },
+  { speaker:'Nami', text:"He stole THREE of my tangerines.\nTHREE! That furry thief owes me big time." },
+  { speaker:'Nami', text:"If you catch him, I'll share\nmy campfire map. Deal?" },
+  { speaker:'Nami', text:"Be careful though — he's clever.\nAnd those feet... SO big it's almost funny." },
+  { speaker:'Nami', text:"Go get him! And bring back\nmy tangerines!  🍊🍊🍊" },
+];
+
+const ROBIN_DIALOG = [
+  { speaker:'Robin', text:"...Fascinating.\nA cryptid sighting at a campsite." },
+  { speaker:'Robin', text:"I've read about Bigfoot in\nancient manuscripts. He's been around\nfor centuries." },
+  { speaker:'Robin', text:"He tends to disguise himself\namong humans when frightened.\nLook for the oversized feet." },
+  { speaker:'Robin', text:"Also... he's terrified of\nPikachu. Use that to your advantage." },
+  { speaker:'Robin', text:"I'll stay here and observe.\nKnowledge is the greatest weapon." },
+];
+
+function checkTalkProximity(){
+  if(gstate!=='playing'){ hideTalkBtn(); return; }
+  let found=null;
+  for(const p of beachPeople){
+    if((p.isNamiStyle||p.isRobinStyle)&&
+       Math.hypot(player.x-p.x,player.y-p.y)<TALK_DIST){
+      found=p; break;
+    }
+  }
+  nearbyTalkChar=found;
+  found?showTalkBtn():hideTalkBtn();
+}
+function showTalkBtn(){ document.getElementById('talk-btn').style.display='block'; }
+function hideTalkBtn(){ document.getElementById('talk-btn').style.display='none'; }
+
+function openMangaDialog(){
+  if(!nearbyTalkChar) return;
+  mangaChar=nearbyTalkChar;
+  mangaLineIdx=0;
+  mangaOpen=true;
+  hideTalkBtn();
+  document.getElementById('manga-overlay').classList.add('active');
+  const panel=document.getElementById('manga-panel');
+  const mc=document.getElementById('manga-canvas');
+  mc.width=panel.clientWidth;
+  mc.height=panel.clientHeight;
+  drawMangaFrame();
+}
+function closeMangaDialog(){
+  mangaOpen=false;
+  document.getElementById('manga-overlay').classList.remove('active');
+}
+function nextMangaLine(){
+  const dialog=mangaChar.isNamiStyle?NAMI_DIALOG:ROBIN_DIALOG;
+  mangaLineIdx=(mangaLineIdx+1)%dialog.length;
+  drawMangaFrame();
+  // Hide next button on last line, show close hint
+  const btn=document.getElementById('manga-next');
+  btn.textContent=mangaLineIdx===dialog.length-1?'Close ✕':'Next ▶';
+  if(mangaLineIdx===dialog.length-1){
+    document.getElementById('manga-next').onclick=closeMangaDialog;
+  } else {
+    document.getElementById('manga-next').onclick=nextMangaLine;
+  }
+}
+
+function drawMangaFrame(){
+  const mc=document.getElementById('manga-canvas');
+  const mx=mc.getContext('2d');
+  const W=mc.width, H=mc.height;
+  const dialog=mangaChar.isNamiStyle?NAMI_DIALOG:ROBIN_DIALOG;
+  const line=dialog[mangaLineIdx];
+  mx.clearRect(0,0,W,H);
+
+  // ── MANGA BACKGROUND — halftone dots ──────────────────
+  mx.fillStyle='#f8f4e8';mx.fillRect(0,0,W,H);
+  mx.fillStyle='rgba(0,0,0,.04)';
+  for(let x=0;x<W;x+=12) for(let y=0;y<H;y+=12)
+    {mx.beginPath();mx.arc(x,y,2,0,Math.PI*2);mx.fill();}
+
+  // Speed lines radiating from character side
+  mx.save();mx.translate(W*.32,H*.42);
+  for(let i=0;i<28;i++){
+    const a=i/28*Math.PI*2;
+    mx.strokeStyle=`rgba(0,0,0,${.04+i%3*.02})`;
+    mx.lineWidth=1+i%2;
+    mx.beginPath();mx.moveTo(0,0);
+    mx.lineTo(Math.cos(a)*(W*.8),Math.sin(a)*(H*.8));
+    mx.stroke();
+  }
+  mx.restore();
+
+  // ── PANEL BORDERS (manga panel style) ────────────────
+  mx.strokeStyle='#111';mx.lineWidth=4;
+  // vertical divider
+  mx.beginPath();mx.moveTo(W*.58,0);mx.lineTo(W*.58,H*.68);mx.stroke();
+  // horizontal bottom panel
+  mx.beginPath();mx.moveTo(0,H*.68);mx.lineTo(W,H*.68);mx.stroke();
+  // outer border
+  mx.strokeRect(2,2,W-4,H-4);
+
+  // ── DRAW CHARACTER ZOOMED IN (left panel) ────────────
+  if(mangaChar.isNamiStyle){
+    drawMangaNami(mx, W*.28, H*.44, 110);
+  } else {
+    drawMangaRobin(mx, W*.28, H*.44, 110);
+  }
+
+  // ── RIGHT PANEL — action/expression panel ────────────
+  mx.save();
+  mx.beginPath();mx.rect(W*.58,0,W*.42,H*.68);mx.clip();
+  if(mangaChar.isNamiStyle){
+    // Nami emotion panel - close up eyes+hair
+    drawMangaNamiCloseup(mx, W*.79, H*.3, 80);
+  } else {
+    drawMangaRobinExpression(mx, W*.79, H*.3, 80);
+  }
+  mx.restore();
+
+  // ── BOTTOM PANEL — speech bubble ─────────────────────
+  mx.save();
+  mx.beginPath();mx.rect(0,H*.68,W,H*.32);mx.clip();
+  mx.fillStyle='#fff';mx.fillRect(0,H*.68,W,H*.32);
+
+  // Speaker name badge
+  const isNami=mangaChar.isNamiStyle;
+  mx.fillStyle=isNami?'#ff6600':'#220033';
+  mx.beginPath();mx.roundRect(16,H*.7,110,32,16);mx.fill();
+  mx.fillStyle='#fff';mx.font='bold 16px Georgia';
+  mx.textAlign='center';mx.textBaseline='middle';
+  mx.fillText(line.speaker,71,H*.7+16);
+
+  // Speech bubble tail pointing up-left
+  mx.fillStyle='#fff';mx.strokeStyle='#111';mx.lineWidth=2.5;
+  mx.beginPath();
+  mx.moveTo(60,H*.68+2);mx.lineTo(40,H*.68-16);mx.lineTo(80,H*.68+2);
+  mx.fill();mx.stroke();
+
+  // Dialog text — manga style bold lettering with line breaks
+  mx.fillStyle='#111';mx.font='bold 18px Georgia';
+  mx.textAlign='left';mx.textBaseline='top';
+  const textLines=line.text.split('\n');
+  const lineH=26;
+  const textY=H*.72;
+  textLines.forEach((tl,i)=>{
+    mx.fillText(tl, 20, textY+i*lineH);
+  });
+
+  // Page number / progress dots
+  const total=dialog.length;
+  for(let d=0;d<total;d++){
+    mx.fillStyle=d===mangaLineIdx?'#111':'#ccc';
+    mx.beginPath();mx.arc(W-20-d*14,H*.73+8,5,0,Math.PI*2);mx.fill();
+  }
+  mx.restore();
+}
+
+// ── Manga Nami: face + upper body, Japan manga style ─────
+function drawMangaNami(mx,cx,cy,s){
+  mx.save();mx.translate(cx,cy);
+
+  // MANGA STYLE: Strong black outlines, flat color, big eyes
+
+  // Hair back layer (orange)
+  mx.fillStyle='#ff7700';
+  mx.beginPath();mx.ellipse(0,-s*.55,s*.52,s*.32,0,0,Math.PI*2);mx.fill();
+  mx.beginPath();mx.ellipse(-s*.42,-s*.38,s*.18,s*.42,-.25,0,Math.PI*2);mx.fill();
+  mx.beginPath();mx.ellipse(s*.42,-s*.38,s*.18,s*.38,.2,0,Math.PI*2);mx.fill();
+
+  // Neck + shoulders
+  mx.fillStyle='#f5c5a0';
+  mx.beginPath();mx.roundRect(-s*.55,s*.12,s*1.1,s*.38,s*.08);mx.fill();
+  mx.strokeStyle='#111';mx.lineWidth=2.5;mx.stroke();
+  // Orange bikini top strap
+  mx.fillStyle='#ff6600';
+  mx.beginPath();mx.roundRect(-s*.42,s*.1,s*.84,s*.16,s*.05);mx.fill();
+  mx.strokeStyle='#111';mx.lineWidth=2;mx.stroke();
+  // center knot detail
+  mx.fillStyle='#cc4400';mx.beginPath();mx.arc(0,s*.18,8,0,Math.PI*2);mx.fill();
+
+  // Neck slim
+  mx.fillStyle='#f5c5a0';
+  mx.beginPath();mx.roundRect(-s*.1,-s*.08,s*.2,s*.22,s*.06);mx.fill();
+  mx.strokeStyle='#111';mx.lineWidth=2;mx.stroke();
+
+  // Face — pointed chin, manga proportions
+  mx.fillStyle='#f5c5a0';
+  mx.beginPath();
+  mx.moveTo(-s*.38,-s*.22);
+  mx.quadraticCurveTo(-s*.42,-s*.5,0,-s*.68);
+  mx.quadraticCurveTo(s*.42,-s*.5,s*.38,-s*.22);
+  mx.quadraticCurveTo(s*.3,s*.08,0,s*.14);
+  mx.quadraticCurveTo(-s*.3,s*.08,-s*.38,-s*.22);
+  mx.closePath();mx.fill();
+  mx.strokeStyle='#111';mx.lineWidth=2.5;mx.stroke();
+
+  // Ear
+  mx.fillStyle='#f5c5a0';
+  mx.beginPath();mx.ellipse(-s*.4,-s*.3,s*.1,s*.15,0,0,Math.PI*2);mx.fill();
+  mx.strokeStyle='#111';mx.lineWidth=2;mx.stroke();
+  mx.beginPath();mx.ellipse(s*.4,-s*.3,s*.1,s*.15,0,0,Math.PI*2);mx.fill();mx.stroke();
+
+  // Hair front strands
+  mx.fillStyle='#ff7700';
+  mx.beginPath();mx.ellipse(-s*.06,-s*.62,s*.38,s*.18,0,0,Math.PI*2);mx.fill();
+  mx.fillRect(-s*.38,-s*.62,s*.76,s*.16);
+  // side fringe sweeping
+  mx.beginPath();mx.ellipse(-s*.28,-s*.38,s*.12,s*.3,-.2,0,Math.PI*2);mx.fill();
+  // Hair outline
+  mx.strokeStyle='#cc4400';mx.lineWidth=2;
+  mx.beginPath();mx.ellipse(-s*.06,-s*.62,s*.38,s*.18,0,0,Math.PI*2);mx.stroke();
+
+  // MANGA EYES — very large, detailed
+  // left eye
+  mx.fillStyle='#fff';mx.strokeStyle='#111';mx.lineWidth=3;
+  mx.beginPath();mx.ellipse(-s*.18,-s*.34,s*.17,s*.2,0,0,Math.PI*2);mx.fill();mx.stroke();
+  // iris brown
+  mx.fillStyle='#8B5e3c';mx.beginPath();mx.ellipse(-s*.18,-s*.34,s*.11,s*.14,0,0,Math.PI*2);mx.fill();
+  // pupil
+  mx.fillStyle='#1a0a00';mx.beginPath();mx.ellipse(-s*.18,-s*.34,s*.065,s*.09,0,0,Math.PI*2);mx.fill();
+  // shine spots
+  mx.fillStyle='#fff';mx.beginPath();mx.arc(-s*.13,-s*.4,s*.04,0,Math.PI*2);mx.fill();
+  mx.beginPath();mx.arc(-s*.22,-s*.28,s*.025,0,Math.PI*2);mx.fill();
+  // lower lash line
+  mx.strokeStyle='#111';mx.lineWidth=2;
+  mx.beginPath();mx.moveTo(-s*.35,-s*.28);mx.quadraticCurveTo(-s*.18,-s*.2,-s*.01,-s*.28);mx.stroke();
+  // upper lash thick
+  mx.lineWidth=4;mx.lineCap='round';
+  mx.beginPath();mx.moveTo(-s*.35,-s*.38);mx.quadraticCurveTo(-s*.18,-s*.56,s*.0,-s*.38);mx.stroke();
+  // lash spikes
+  mx.lineWidth=2.5;
+  [[-s*.32,-s*.38,-s*.38,-s*.48],[- s*.2,-s*.52,-s*.22,-s*.62],[- s*.08,-s*.5,-s*.06,-s*.6]].forEach(([x1,y1,x2,y2])=>{
+    mx.beginPath();mx.moveTo(x1,y1);mx.lineTo(x2,y2);mx.stroke();
+  });
+
+  // right eye
+  mx.fillStyle='#fff';mx.strokeStyle='#111';mx.lineWidth=3;
+  mx.beginPath();mx.ellipse(s*.18,-s*.34,s*.17,s*.2,0,0,Math.PI*2);mx.fill();mx.stroke();
+  mx.fillStyle='#8B5e3c';mx.beginPath();mx.ellipse(s*.18,-s*.34,s*.11,s*.14,0,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#1a0a00';mx.beginPath();mx.ellipse(s*.18,-s*.34,s*.065,s*.09,0,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#fff';mx.beginPath();mx.arc(s*.23,-s*.4,s*.04,0,Math.PI*2);mx.fill();
+  mx.beginPath();mx.arc(s*.14,-s*.28,s*.025,0,Math.PI*2);mx.fill();
+  mx.strokeStyle='#111';mx.lineWidth=2;
+  mx.beginPath();mx.moveTo(s*.01,-s*.28);mx.quadraticCurveTo(s*.18,-s*.2,s*.35,-s*.28);mx.stroke();
+  mx.lineWidth=4;
+  mx.beginPath();mx.moveTo(s*.01,-s*.38);mx.quadraticCurveTo(s*.18,-s*.56,s*.35,-s*.38);mx.stroke();
+  mx.lineWidth=2.5;
+  [[s*.32,-s*.38,s*.38,-s*.48],[s*.2,-s*.52,s*.22,-s*.62],[s*.08,-s*.5,s*.06,-s*.6]].forEach(([x1,y1,x2,y2])=>{
+    mx.beginPath();mx.moveTo(x1,y1);mx.lineTo(x2,y2);mx.stroke();
+  });
+
+  // Eyebrows — bold arched orange-brown
+  mx.strokeStyle='#cc5500';mx.lineWidth=s*.05;mx.lineCap='round';
+  mx.beginPath();mx.moveTo(-s*.35,-s*.55);mx.quadraticCurveTo(-s*.18,-s*.64,s*.0,-s*.55);mx.stroke();
+  mx.beginPath();mx.moveTo(s*.01,-s*.55);mx.quadraticCurveTo(s*.18,-s*.64,s*.35,-s*.55);mx.stroke();
+
+  // Nose — tiny manga dot
+  mx.fillStyle='#d4906a';
+  mx.beginPath();mx.ellipse(0,-s*.14,s*.04,s*.03,0,0,Math.PI*2);mx.fill();
+
+  // Lips — slightly open manga style
+  mx.fillStyle='#e87070';
+  mx.beginPath();mx.ellipse(0,s*.02,s*.14,s*.07,0,0,Math.PI*2);mx.fill();
+  mx.strokeStyle='#c04040';mx.lineWidth=1.5;mx.stroke();
+  mx.fillStyle='#cc3030';
+  mx.beginPath();mx.ellipse(0,s*.02,s*.14,s*.025,0,Math.PI,0);mx.fill();
+  // lip gloss
+  mx.fillStyle='rgba(255,180,180,.4)';
+  mx.beginPath();mx.ellipse(-s*.04,-s*.01,s*.06,s*.03,-.2,0,Math.PI*2);mx.fill();
+
+  // Blush marks — manga style horizontal lines
+  mx.strokeStyle='rgba(255,120,120,.55)';mx.lineWidth=2.5;mx.lineCap='round';
+  [[-s*.38,-s*.22],[-s*.3,-s*.18],[-s*.22,-s*.22]].forEach(([x,y])=>{
+    mx.beginPath();mx.moveTo(x,y);mx.lineTo(x+s*.12,y);mx.stroke();
+  });
+  [[s*.22,-s*.22],[s*.3,-s*.18],[s*.38,-s*.22]].forEach(([x,y])=>{
+    mx.beginPath();mx.moveTo(x,y);mx.lineTo(x-s*.12,y);mx.stroke();
+  });
+
+  mx.restore();
+}
+
+function drawMangaNamiCloseup(mx,cx,cy,s){
+  mx.save();mx.translate(cx,cy);
+  // Just eyes and expression close-up
+  mx.fillStyle='#f5c5a0';mx.beginPath();mx.ellipse(0,0,s*.7,s*.6,0,0,Math.PI*2);mx.fill();
+  mx.strokeStyle='#111';mx.lineWidth=2;mx.stroke();
+  // Hair
+  mx.fillStyle='#ff7700';mx.beginPath();mx.ellipse(0,-s*.42,s*.72,s*.28,0,0,Math.PI*2);mx.fill();
+  mx.fillRect(-s*.72,-s*.42,s*1.44,s*.24);
+  // Eyes extra large
+  mx.fillStyle='#fff';mx.strokeStyle='#111';mx.lineWidth=3;
+  mx.beginPath();mx.ellipse(-s*.28,-s*.1,s*.22,s*.27,0,0,Math.PI*2);mx.fill();mx.stroke();
+  mx.fillStyle='#8B5e3c';mx.beginPath();mx.ellipse(-s*.28,-s*.1,s*.15,s*.19,0,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#111';mx.beginPath();mx.ellipse(-s*.28,-s*.1,s*.09,s*.12,0,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#fff';mx.beginPath();mx.arc(-s*.21,-s*.17,s*.06,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#fff';mx.strokeStyle='#111';mx.lineWidth=3;
+  mx.beginPath();mx.ellipse(s*.28,-s*.1,s*.22,s*.27,0,0,Math.PI*2);mx.fill();mx.stroke();
+  mx.fillStyle='#8B5e3c';mx.beginPath();mx.ellipse(s*.28,-s*.1,s*.15,s*.19,0,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#111';mx.beginPath();mx.ellipse(s*.28,-s*.1,s*.09,s*.12,0,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#fff';mx.beginPath();mx.arc(s*.35,-s*.17,s*.06,0,Math.PI*2);mx.fill();
+  // blush
+  mx.strokeStyle='rgba(255,120,120,.6)';mx.lineWidth=3;mx.lineCap='round';
+  [[-s*.55,s*.05],[-s*.45,s*.1],[-s*.35,s*.05]].forEach(([x,y])=>{mx.beginPath();mx.moveTo(x,y);mx.lineTo(x+s*.14,y);mx.stroke();});
+  [[s*.35,s*.05],[s*.45,s*.1],[s*.55,s*.05]].forEach(([x,y])=>{mx.beginPath();mx.moveTo(x,y);mx.lineTo(x-s*.14,y);mx.stroke();});
+  // sweat drop (surprised)
+  mx.fillStyle='#88ccff';mx.strokeStyle='#4488cc';mx.lineWidth=1.5;
+  mx.beginPath();mx.moveTo(s*.6,-s*.4);mx.quadraticCurveTo(s*.72,-s*.2,s*.6,-s*.1);mx.quadraticCurveTo(s*.48,-s*.2,s*.6,-s*.4);mx.fill();mx.stroke();
+  mx.restore();
+}
+
+// ── Manga Robin: faithful to reference — dark hair, teal eyes, black jacket ──
+function drawMangaRobin(mx,cx,cy,s){
+  mx.save();mx.translate(cx,cy);
+
+  // ── CHERRY BLOSSOM PETALS behind her ──
+  const petals=[[-s*.85,-s*.7,12],[ s*.9,-s*.5,10],[-s*.7,s*.2,9],[s*.8,s*.1,11],[-s*.5,-s*.9,8],[s*.6,s*.6,13]];
+  petals.forEach(([px,py,pr])=>{
+    mx.fillStyle='rgba(255,200,210,.7)';
+    mx.beginPath();
+    mx.ellipse(px,py,pr,pr*.6,px*.5,0,Math.PI*2);mx.fill();
+    mx.fillStyle='rgba(255,180,200,.5)';
+    mx.beginPath();mx.ellipse(px+4,py-3,pr*.5,pr*.35,0,0,Math.PI*2);mx.fill();
+  });
+
+  // ── LONG DARK HAIR flowing right (navy-black) ──
+  const hc='#1a1530';
+  // back hair mass — flows to right heavily
+  mx.fillStyle=hc;
+  mx.beginPath();
+  mx.moveTo(-s*.3,-s*.75);
+  mx.quadraticCurveTo(s*.6,-s*.5, s*.8, s*.2);
+  mx.quadraticCurveTo(s*.85, s*.6, s*.6, s*.85);
+  mx.quadraticCurveTo(s*.2, s*.95, -s*.1, s*.7);
+  mx.quadraticCurveTo(-s*.5, s*.3, -s*.45,-s*.1);
+  mx.quadraticCurveTo(-s*.5,-s*.5,-s*.3,-s*.75);
+  mx.closePath();mx.fill();
+  // left side hair strand
+  mx.beginPath();
+  mx.moveTo(-s*.38,-s*.6);
+  mx.quadraticCurveTo(-s*.55,-s*.2,-s*.5,s*.4);
+  mx.quadraticCurveTo(-s*.48,s*.6,-s*.3,s*.65);
+  mx.lineTo(-s*.2,s*.5);
+  mx.quadraticCurveTo(-s*.4,s*.2,-s*.38,-s*.4);
+  mx.closePath();mx.fill();
+  // white/grey streak near front
+  mx.fillStyle='#4a4060';
+  mx.beginPath();
+  mx.moveTo(-s*.28,-s*.7);
+  mx.quadraticCurveTo(-s*.35,-s*.3,-s*.32,s*.1);
+  mx.lineTo(-s*.24,s*.1);
+  mx.quadraticCurveTo(-s*.24,-s*.3,-s*.18,-s*.65);
+  mx.closePath();mx.fill();
+
+  // ── BODY: black jacket + midriff + black bikini bottom ──
+  // midriff skin
+  mx.fillStyle='#f0d0b0';
+  mx.beginPath();mx.roundRect(-s*.42,s*.3,s*.84,s*.22,s*.04);mx.fill();
+  mx.strokeStyle='rgba(0,0,0,.3)';mx.lineWidth=1;mx.stroke();
+  // black bikini bottom
+  mx.fillStyle='#111';
+  mx.beginPath();mx.roundRect(-s*.4,s*.5,s*.8,s*.28,s*.06);mx.fill();
+  mx.strokeStyle='#333';mx.lineWidth=1.5;mx.stroke();
+  // bikini V-strap lines
+  mx.strokeStyle='#222';mx.lineWidth=2;
+  mx.beginPath();mx.moveTo(-s*.08,s*.5);mx.lineTo(-s*.28,s*.42);mx.stroke();
+  mx.beginPath();mx.moveTo(s*.08,s*.5);mx.lineTo(s*.28,s*.42);mx.stroke();
+  // black jacket body — open V front
+  mx.fillStyle='#1a1a22';
+  mx.beginPath();
+  mx.moveTo(-s*.5,s*.05);
+  mx.quadraticCurveTo(-s*.48,-s*.05,-s*.44,-s*.1);
+  mx.lineTo(-s*.44,s*.32);mx.lineTo(-s*.42,s*.32);
+  mx.lineTo(-s*.42,s*.05);mx.closePath();mx.fill(); // left panel
+  mx.beginPath();
+  mx.moveTo(s*.5,s*.05);
+  mx.quadraticCurveTo(s*.48,-s*.05,s*.44,-s*.1);
+  mx.lineTo(s*.44,s*.32);mx.lineTo(s*.42,s*.32);
+  mx.lineTo(s*.42,s*.05);mx.closePath();mx.fill(); // right panel
+  // jacket main body
+  mx.beginPath();
+  mx.moveTo(-s*.5,-s*.08);
+  mx.lineTo(-s*.14,-s*.08); // V open to center
+  mx.lineTo(0,-s*.02); // center V dip
+  mx.lineTo(s*.14,-s*.08);
+  mx.lineTo(s*.5,-s*.08);
+  mx.lineTo(s*.5,s*.32);
+  mx.lineTo(-s*.5,s*.32);
+  mx.closePath();mx.fill();
+  mx.strokeStyle='#333';mx.lineWidth=2;mx.stroke();
+  // silver buttons on jacket
+  mx.fillStyle='#c8c8d8';mx.shadowColor='#fff';mx.shadowBlur=3;
+  [[-s*.25,s*.02],[s*.25,s*.02],[-s*.28,s*.16],[s*.28,s*.16],[-s*.25,s*.28],[s*.25,s*.28]].forEach(([bx,by])=>{
+    mx.beginPath();mx.arc(bx,by,s*.04,0,Math.PI*2);mx.fill();
+    mx.strokeStyle='#888';mx.lineWidth=1;mx.stroke();
+  });
+  mx.shadowBlur=0;
+  // jacket lapel shine
+  mx.fillStyle='rgba(80,80,120,.4)';
+  mx.beginPath();mx.moveTo(-s*.14,-s*.08);mx.lineTo(-s*.44,-s*.1);mx.lineTo(-s*.44,s*.05);mx.lineTo(-s*.1,s*.05);mx.closePath();mx.fill();
+  mx.beginPath();mx.moveTo(s*.14,-s*.08);mx.lineTo(s*.44,-s*.1);mx.lineTo(s*.44,s*.05);mx.lineTo(s*.1,s*.05);mx.closePath();mx.fill();
+
+  // ── PURPLE GLOVES on arms ──
+  mx.fillStyle='#5a2080';
+  mx.beginPath();mx.roundRect(-s*.7,-s*.02,s*.28,s*.32,s*.06);mx.fill(); // left arm
+  mx.strokeStyle='#3a1060';mx.lineWidth=2;mx.stroke();
+  mx.beginPath();mx.roundRect(s*.42,-s*.02,s*.28,s*.32,s*.06);mx.fill();  // right arm
+  mx.stroke();
+  // glove cuffs
+  mx.fillStyle='#6a28a0';
+  mx.beginPath();mx.roundRect(-s*.7,-s*.04,s*.28,s*.1,s*.04);mx.fill();
+  mx.beginPath();mx.roundRect(s*.42,-s*.04,s*.28,s*.1,s*.04);mx.fill();
+
+  // ── ORANGE HEADPHONES/EARPIECE ──
+  mx.fillStyle='#e8920a';mx.shadowColor='#ff9900';mx.shadowBlur=4;
+  mx.beginPath();mx.ellipse(-s*.32,-s*.42,s*.1,s*.12,-.3,0,Math.PI*2);mx.fill();
+  mx.shadowBlur=0;
+  // headphone detail
+  mx.fillStyle='#f5aa20';
+  mx.beginPath();mx.arc(-s*.32,-s*.42,s*.07,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#1a0a00';mx.beginPath();mx.arc(-s*.32,-s*.42,s*.04,0,Math.PI*2);mx.fill();
+  // antenna stick
+  mx.strokeStyle='#cc8800';mx.lineWidth=s*.025;mx.lineCap='round';
+  mx.beginPath();mx.moveTo(-s*.28,-s*.5);mx.lineTo(-s*.14,-s*.72);mx.stroke();
+
+  // ── NECK ──
+  mx.fillStyle='#f0d0b0';
+  mx.beginPath();mx.roundRect(-s*.1,-s*.12,s*.2,s*.22,s*.06);mx.fill();
+  mx.strokeStyle='rgba(0,0,0,.2)';mx.lineWidth=1;mx.stroke();
+
+  // ── FACE — tall, slender, high cheekbones ──
+  mx.fillStyle='#f0d0b0';
+  mx.beginPath();
+  mx.moveTo(-s*.3,-s*.22);
+  mx.quadraticCurveTo(-s*.36,-s*.55, s*.0,-s*.72);
+  mx.quadraticCurveTo(s*.36,-s*.55, s*.3,-s*.22);
+  mx.quadraticCurveTo(s*.24, s*.1,  s*.0, s*.16);
+  mx.quadraticCurveTo(-s*.24,s*.1, -s*.3,-s*.22);
+  mx.closePath();mx.fill();
+  mx.strokeStyle='rgba(0,0,0,.5)';mx.lineWidth=2;mx.stroke();
+
+  // Ear left
+  mx.fillStyle='#f0d0b0';
+  mx.beginPath();mx.ellipse(-s*.32,-s*.34,s*.09,s*.14,-.1,0,Math.PI*2);mx.fill();
+  mx.strokeStyle='rgba(0,0,0,.4)';mx.lineWidth=1.5;mx.stroke();
+
+  // ── HAIR FRONT over face ──
+  mx.fillStyle=hc;
+  // main top parted slightly right
+  mx.beginPath();
+  mx.moveTo(-s*.32,-s*.72);
+  mx.quadraticCurveTo(-s*.1,-s*.82,s*.06,-s*.72);
+  mx.quadraticCurveTo(s*.3,-s*.5,s*.28,-s*.22);
+  mx.lineTo(s*.18,-s*.22);
+  mx.quadraticCurveTo(s*.2,-s*.45,s*.0,-s*.62);
+  mx.quadraticCurveTo(-s*.14,-s*.72,-s*.22,-s*.62);
+  mx.closePath();mx.fill();
+  // left front strand framing face
+  mx.beginPath();
+  mx.moveTo(-s*.32,-s*.62);
+  mx.quadraticCurveTo(-s*.38,-s*.38,-s*.36,-s*.1);
+  mx.quadraticCurveTo(-s*.34,s*.04,-s*.28,s*.08);
+  mx.lineTo(-s*.22,s*.05);
+  mx.quadraticCurveTo(-s*.28,-s*.06,-s*.28,-s*.28);
+  mx.quadraticCurveTo(-s*.26,-s*.52,-s*.22,-s*.6);
+  mx.closePath();mx.fill();
+  // hair sheen line
+  mx.strokeStyle='#2a2048';mx.lineWidth=1.5;
+  mx.beginPath();mx.moveTo(-s*.04,-s*.78);mx.quadraticCurveTo(s*.02,-s*.55,s*.04,-s*.22);mx.stroke();
+
+  // ── TEAL BLUE EYES — large, detailed ──
+  const eyePos=[[-s*.14,-s*.36],[s*.14,-s*.36]];
+  eyePos.forEach(([ex,ey],ei)=>{
+    // eye white
+    mx.fillStyle='#f5f5ff';mx.strokeStyle='rgba(0,0,0,.6)';mx.lineWidth=2.5;
+    mx.beginPath();mx.ellipse(ex,ey,s*.15,s*.13,0,0,Math.PI*2);mx.fill();mx.stroke();
+    // teal iris — bright cyan-blue
+    mx.fillStyle='#38b8c8';mx.beginPath();mx.ellipse(ex,ey,s*.1,s*.1,0,0,Math.PI*2);mx.fill();
+    // iris ring detail
+    mx.strokeStyle='#1a8898';mx.lineWidth=1;
+    mx.beginPath();mx.ellipse(ex,ey,s*.1,s*.1,0,0,Math.PI*2);mx.stroke();
+    // deep pupil
+    mx.fillStyle='#050a0a';mx.beginPath();mx.ellipse(ex,ey,s*.055,s*.06,0,0,Math.PI*2);mx.fill();
+    // primary shine
+    mx.fillStyle='rgba(255,255,255,.95)';mx.beginPath();mx.arc(ex+s*.04,ey-s*.04,s*.032,0,Math.PI*2);mx.fill();
+    // secondary smaller shine
+    mx.fillStyle='rgba(255,255,255,.6)';mx.beginPath();mx.arc(ex-s*.04,ey+s*.02,s*.016,0,Math.PI*2);mx.fill();
+    // upper eyelid — clean sharp line
+    mx.strokeStyle='#111';mx.lineWidth=3;mx.lineCap='round';
+    mx.beginPath();mx.moveTo(ex-s*.15,ey-s*.04);mx.quadraticCurveTo(ex,ey-s*.2,ex+s*.15,ey-s*.04);mx.stroke();
+    // eyelid corner flick (feminine)
+    mx.lineWidth=2.5;
+    if(ei===0){mx.beginPath();mx.moveTo(ex-s*.15,ey-s*.04);mx.lineTo(ex-s*.2,ey+s*.02);mx.stroke();}
+    else{mx.beginPath();mx.moveTo(ex+s*.15,ey-s*.04);mx.lineTo(ex+s*.2,ey+s*.02);mx.stroke();}
+    // lower lash line subtle
+    mx.strokeStyle='rgba(0,0,0,.5)';mx.lineWidth=1.5;
+    mx.beginPath();mx.moveTo(ex-s*.14,ey+s*.06);mx.quadraticCurveTo(ex,ey+s*.16,ex+s*.14,ey+s*.06);mx.stroke();
+  });
+
+  // ── EYEBROWS — elegant, dark, thin ──
+  mx.strokeStyle='#1a1530';mx.lineWidth=s*.042;mx.lineCap='round';
+  mx.beginPath();mx.moveTo(-s*.28,-s*.52);mx.quadraticCurveTo(-s*.14,-s*.6,-s*.0,-s*.52);mx.stroke();
+  mx.beginPath();mx.moveTo(s*.02,-s*.52);mx.quadraticCurveTo(s*.14,-s*.6,s*.28,-s*.52);mx.stroke();
+
+  // ── NOSE — elegant, barely there ──
+  mx.strokeStyle='rgba(180,130,100,.7)';mx.lineWidth=1.5;mx.lineCap='round';
+  mx.beginPath();mx.moveTo(-s*.03,-s*.14);mx.quadraticCurveTo(-s*.07,-s*.09,0,-s*.07);mx.stroke();
+  mx.beginPath();mx.moveTo(s*.03,-s*.14);mx.quadraticCurveTo(s*.07,-s*.09,0,-s*.07);mx.stroke();
+
+  // ── LIPS — calm, slightly parted, light pink ──
+  mx.fillStyle='#e8909a';
+  mx.beginPath();mx.ellipse(0,s*.04,s*.11,s*.05,0,0,Math.PI*2);mx.fill();
+  mx.strokeStyle='#c07080';mx.lineWidth=1;mx.stroke();
+  mx.fillStyle='#cc6a78';
+  mx.beginPath();mx.moveTo(-s*.11,s*.04);mx.quadraticCurveTo(0,s*.0,s*.11,s*.04);mx.stroke();
+  // subtle lip gloss
+  mx.fillStyle='rgba(255,220,230,.45)';
+  mx.beginPath();mx.ellipse(-s*.03,s*.02,s*.05,s*.025,-.2,0,Math.PI*2);mx.fill();
+
+  mx.restore();
+}
+
+function drawMangaRobinExpression(mx,cx,cy,s){
+  mx.save();mx.translate(cx,cy);
+  // Cherry petals
+  [[-s*.7,-s*.5,9],[s*.75,-s*.3,8],[-s*.5,s*.4,7]].forEach(([px,py,pr])=>{
+    mx.fillStyle='rgba(255,200,210,.65)';mx.beginPath();mx.ellipse(px,py,pr,pr*.6,0,0,Math.PI*2);mx.fill();
+  });
+  // dark hair mass
+  mx.fillStyle='#1a1530';
+  mx.beginPath();mx.ellipse(0,-s*.32,s*.7,s*.32,0,0,Math.PI*2);mx.fill();
+  mx.fillRect(-s*.7,-s*.32,s*1.4,s*.28);
+  mx.beginPath();mx.ellipse(-s*.6,-s*.1,s*.2,s*.45,-.15,0,Math.PI*2);mx.fill();
+  mx.beginPath();mx.ellipse(s*.65,-s*.1,s*.2,s*.4,.1,0,Math.PI*2);mx.fill();
+  // face
+  mx.fillStyle='#f0d0b0';mx.beginPath();mx.ellipse(0,s*.05,s*.58,s*.52,0,0,Math.PI*2);mx.fill();
+  mx.strokeStyle='rgba(0,0,0,.4)';mx.lineWidth=2;mx.stroke();
+  // orange earpiece
+  mx.fillStyle='#e8920a';mx.shadowColor='#ff9900';mx.shadowBlur=4;
+  mx.beginPath();mx.ellipse(-s*.48,-s*.18,s*.12,s*.14,-.3,0,Math.PI*2);mx.fill();mx.shadowBlur=0;
+  mx.fillStyle='#f5aa20';mx.beginPath();mx.arc(-s*.48,-s*.18,s*.08,0,Math.PI*2);mx.fill();
+  mx.fillStyle='#111';mx.beginPath();mx.arc(-s*.48,-s*.18,s*.04,0,Math.PI*2);mx.fill();
+  // antenna
+  mx.strokeStyle='#cc8800';mx.lineWidth=s*.025;
+  mx.beginPath();mx.moveTo(-s*.4,-s*.28);mx.lineTo(-s*.24,-s*.52);mx.stroke();
+  // front hair strands
+  mx.fillStyle='#1a1530';
+  mx.beginPath();mx.ellipse(s*.1,-s*.4,s*.52,s*.24,0,0,Math.PI*2);mx.fill();
+  mx.fillRect(-s*.42,-s*.4,s*.84,s*.22);
+  // teal eyes — large, half-lidded calm
+  [[-s*.22,s*.0],[s*.22,s*.0]].forEach(([ex,ey],ei)=>{
+    mx.fillStyle='#f5f5ff';mx.strokeStyle='rgba(0,0,0,.6)';mx.lineWidth=2;
+    mx.beginPath();mx.ellipse(ex,ey,s*.2,s*.16,0,0,Math.PI*2);mx.fill();mx.stroke();
+    mx.fillStyle='#38b8c8';mx.beginPath();mx.ellipse(ex,ey,s*.13,s*.12,0,0,Math.PI*2);mx.fill();
+    mx.fillStyle='#111';mx.beginPath();mx.ellipse(ex,ey,s*.07,s*.07,0,0,Math.PI*2);mx.fill();
+    mx.fillStyle='rgba(255,255,255,.9)';mx.beginPath();mx.arc(ex+s*.05,ey-s*.04,s*.04,0,Math.PI*2);mx.fill();
+    // half-lid droop (calm/knowing)
+    mx.fillStyle='#f0d0b0';mx.beginPath();mx.ellipse(ex,ey-s*.1,s*.2,s*.07,0,0,Math.PI*2);mx.fill();
+    mx.strokeStyle='#111';mx.lineWidth=3;mx.lineCap='round';
+    mx.beginPath();mx.moveTo(ex-s*.2,ey-s*.04);mx.quadraticCurveTo(ex,ey-s*.22,ex+s*.2,ey-s*.04);mx.stroke();
+    // corner flick
+    if(ei===0){mx.beginPath();mx.moveTo(ex-s*.2,ey-s*.04);mx.lineTo(ex-s*.26,ey+s*.04);mx.stroke();}
+    else{mx.beginPath();mx.moveTo(ex+s*.2,ey-s*.04);mx.lineTo(ex+s*.26,ey+s*.04);mx.stroke();}
+  });
+  // eyebrows elegant
+  mx.strokeStyle='#1a1530';mx.lineWidth=s*.04;mx.lineCap='round';
+  mx.beginPath();mx.moveTo(-s*.36,-s*.2);mx.quadraticCurveTo(-s*.22,-s*.28,-s*.08,-s*.2);mx.stroke();
+  mx.beginPath();mx.moveTo(s*.08,-s*.2);mx.quadraticCurveTo(s*.22,-s*.28,s*.36,-s*.2);mx.stroke();
+  // knowing smile
+  mx.strokeStyle='#c07080';mx.lineWidth=2;mx.lineCap='round';
+  mx.beginPath();mx.moveTo(-s*.14,s*.26);mx.quadraticCurveTo(0,s*.38,s*.14,s*.26);mx.stroke();
+  // light blush
+  mx.fillStyle='rgba(255,160,180,.2)';
+  mx.beginPath();mx.ellipse(-s*.42,s*.12,s*.18,s*.1,0,0,Math.PI*2);mx.fill();
+  mx.beginPath();mx.ellipse(s*.42,s*.12,s*.18,s*.1,0,0,Math.PI*2);mx.fill();
+  mx.restore();
+}
+
+// Hook proximity check into main loop
+const _origLoopTalkCheck=loop;
+loop=function(ts){
+  _origLoopTalkCheck(ts);
+  if(gstate==='playing') checkTalkProximity();
+};
+
+// ESC closes manga
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&mangaOpen) closeMangaDialog();
+});
+
+
+// ══════════════════════════════════════════════════════════
+// ── SURFBOARD RIDE SYSTEM ─────────────────────────────────
+// ══════════════════════════════════════════════════════════
+const WATER_WORLD_Y  = 2650;  // y >= this is water
+const BEACH_SAND_Y   = 2350;  // y >= this is beach/sand
+const SURF_PICKUP_DIST = 100; // how close to board to mount
+const SURF_SPEED_BASE  = 380; // px/sec on board (vs 220 walking)
+const SURF_WAVE_BONUS  = 240; // extra speed when riding a wave crest
+
+// Surfboard world object
+const surfboard = {
+  x: 1200, y: WATER_WORLD_Y + 40,
+  vx: 0, vy: 0,
+  angle: 0,             // tilt angle
+  mounted: false,       // player is riding
+  waveRide: false,      // currently catching a wave
+  wavePhase: 0,         // tracks which wave crest we're on
+  waveBoost: 0,         // current wave speed bonus (fades)
+  bobT: 0,              // idle bob timer
+};
+
+// Track wave crests as moving world objects
+// Each wave moves left-to-right at a speed, then resets
+const WAVE_COUNT = 4;
+// Wave event system — big catchable wave every 15 seconds
+let waveCycleCooldown = 15.0;    // time until next wave event
+let waveCycleActive   = false;   // is a big wave currently rolling in?
+let waveCycleTimer    = 0;       // how long the active wave lasts
+const WAVE_CYCLE_INTERVAL = 15;  // seconds between wave events
+const WAVE_CYCLE_DURATION = 5;   // wave stays catchable for 5 seconds
+
+// Passive small waves (always visible, NOT catchable for boost)
+let waveCrests = Array.from({length:WAVE_COUNT},(_,i)=>({
+  worldY: WATER_WORLD_Y + 30 + i*55,
+  phase:  i * (Math.PI*2/WAVE_COUNT),
+}));
+
+// The BIG catchable wave
+let bigWave = {
+  active: false,
+  worldY: WATER_WORLD_Y + 60,  // spawns deep, moves toward shore
+  speed: 90,                   // px/sec toward shore (decreasing y)
+  width: 40,                   // catch window half-width
+};
+
+function isInWater(y){ return y >= WATER_WORLD_Y; }
+function isOnBeach(y){ return y >= BEACH_SAND_Y && y < WATER_WORLD_Y; }
+
+// ── SURF BUTTON VISIBILITY ────────────────────────────────
+function checkSurfProximity(){
+  if(gstate!=='playing'||surfboard.mounted){ hideSurfBtn(); }
+  else {
+    const d=Math.hypot(player.x-surfboard.x, player.y-surfboard.y);
+    d < SURF_PICKUP_DIST ? showSurfBtn() : hideSurfBtn();
+  }
+  // Update wave HUD
+  const wHud=document.getElementById('wave-hud');
+  const wCd=document.getElementById('wave-cd');
+  if(gstate==='playing'&&isOnBeach(player.y)||isInWater(player.y)){
+    wHud.style.display='flex';
+    if(bigWave.active){ wCd.textContent='NOW! 🏄'; wCd.style.color='#ffe44d'; }
+    else { wCd.textContent=Math.ceil(waveCycleCooldown)+'s'; wCd.style.color='#00ccff'; }
+  } else { wHud.style.display='none'; }
+}
+function showSurfBtn(){ document.getElementById('surf-btn').style.display='block'; }
+function hideSurfBtn(){ document.getElementById('surf-btn').style.display='none'; }
+
+// ── MOUNT / DISMOUNT ──────────────────────────────────────
+function mountSurfboard(){
+  if(surfboard.mounted) return;
+  surfboard.mounted = true;
+  surfboard.x = player.x;
+  surfboard.y = Math.max(WATER_WORLD_Y+10, player.y);
+  surfboard.vx = 0; surfboard.vy = 0;
+  surfboard.waveRide = false; surfboard.waveBoost = 0;
+  hideSurfBtn();
+  setMsg('🏄 Surfing! Arrow keys to steer — ride the waves for a speed boost!');
+  // Change surf button to dismount while riding
+  document.getElementById('surf-btn').textContent='🏄 Dismount';
+  document.getElementById('surf-btn').onclick=dismountSurfboard;
+  document.getElementById('surf-btn').style.display='block';
+}
+function dismountSurfboard(){
+  surfboard.mounted=false;
+  surfboard.vx=0; surfboard.vy=0;
+  // Drop player at board position on sand if possible
+  const landY = Math.min(surfboard.y, WATER_WORLD_Y - player.r - 5);
+  const safe = findSafeSpot(surfboard.x, landY, player.r, 60);
+  player.x = safe.x; player.y = safe.y;
+  document.getElementById('surf-btn').textContent='🏄 Surf!';
+  document.getElementById('surf-btn').onclick=mountSurfboard;
+  hideSurfBtn();
+  setMsg('Back on land!');
+}
+
+// ── UPDATE SURFBOARD EACH FRAME ───────────────────────────
+function updateSurfboard(dt){
+  surfboard.bobT += dt;
+
+  if(!surfboard.mounted){
+    // Idle: bob gently on water
+    surfboard.y = WATER_WORLD_Y + 30 + Math.sin(surfboard.bobT*1.4)*12;
+    surfboard.angle = Math.sin(surfboard.bobT*1.1)*0.12;
+    return;
+  }
+
+  // ── PLAYER ON BOARD ───────────────────────────────────
+  // Read input
+  let ix=0, iy=0;
+  if(keys['ArrowLeft']||keys['a'])  ix=-1;
+  if(keys['ArrowRight']||keys['d']) ix=1;
+  if(keys['ArrowUp']||keys['w'])    iy=-1;
+  if(keys['ArrowDown']||keys['s'])  iy=1;
+
+  // Click-to-move also works on board
+  if(clickTarget && isInWater(clickTarget.y)){
+    const dx=clickTarget.x-surfboard.x, dy=clickTarget.y-surfboard.y;
+    const d=Math.hypot(dx,dy);
+    if(d>15){ ix=dx/d; iy=dy/d; } else clickTarget=null;
+  }
+
+  // ── WAVE BOOST DETECTION — only the big 15s wave is catchable ──────
+  let onWave = false;
+  let waveDir = 1;
+  if(bigWave.active){
+    const dist2 = Math.abs(surfboard.y - bigWave.worldY);
+    if(dist2 < bigWave.width + 20){
+      onWave = true;
+    }
+  }
+
+  if(onWave && !surfboard.waveRide){
+    // Just caught a wave!
+    surfboard.waveRide = true;
+    surfboard.waveBoost = SURF_WAVE_BONUS;
+    addFloat(surfboard.x, surfboard.y-50, '🌊 Ride the wave!','#00aaff');
+    burst(surfboard.x, surfboard.y, '#88ddff', 10);
+  }
+  if(!onWave) surfboard.waveRide = false;
+
+  // Decay wave boost
+  if(surfboard.waveBoost > 0) surfboard.waveBoost = Math.max(0, surfboard.waveBoost - 200*dt);
+
+  // ── TICK BIG WAVE CYCLE ───────────────────────────────────────────
+  waveCycleCooldown -= dt;
+  if(waveCycleCooldown <= 0 && !waveCycleActive){
+    // Spawn big wave far out to sea, rolls toward shore
+    waveCycleActive = true;
+    waveCycleTimer = WAVE_CYCLE_DURATION;
+    bigWave.active = true;
+    bigWave.worldY = WATER_WORLD_Y + 350; // starts deep
+    // Announce incoming wave
+    addFloat(player.x, player.y-60, '🌊 Big wave in 3s!', '#00ccff');
+    setMsg('🌊 Big wave coming — paddle out to catch it!');
+    waveCycleCooldown = WAVE_CYCLE_INTERVAL;
+  }
+  if(waveCycleActive){
+    waveCycleTimer -= dt;
+    // Move wave toward shore (decreasing worldY)
+    bigWave.worldY -= bigWave.speed * dt;
+    // When wave hits shore, deactivate
+    if(bigWave.worldY < WATER_WORLD_Y + 10 || waveCycleTimer <= 0){
+      bigWave.active = false;
+      waveCycleActive = false;
+      bigWave.worldY = WATER_WORLD_Y + 60;
+    }
+  }
+
+  // ── VELOCITY ─────────────────────────────────────────
+  const speed = SURF_SPEED_BASE + surfboard.waveBoost;
+  let tvx = ix * speed;
+  let tvy = iy * speed;
+
+  // Wave pushes board shoreward (toward lower y = toward beach)
+  if(surfboard.waveRide && surfboard.waveBoost>50){
+    tvx += waveDir * surfboard.waveBoost * 0.6;
+    tvy -= surfboard.waveBoost * 0.3; // push toward beach
+  }
+
+  // Smooth velocity
+  surfboard.vx += (tvx - surfboard.vx) * Math.min(1, dt*5);
+  surfboard.vy += (tvy - surfboard.vy) * Math.min(1, dt*5);
+
+  // ── POSITION ─────────────────────────────────────────
+  let nx = surfboard.x + surfboard.vx*dt;
+  let ny = surfboard.y + surfboard.vy*dt;
+
+  // Constrain to water + slight onto beach for dismount
+  nx = Math.max(60, Math.min(WORLD_W-60, nx));
+  ny = Math.max(WATER_WORLD_Y-20, Math.min(WORLD_H-60, ny));
+
+  // If wave pushes board to shore, auto-dismount
+  if(ny < BEACH_SAND_Y + 30 && surfboard.waveRide){
+    ny = BEACH_SAND_Y + 20;
+    addFloat(nx, ny-40,'🏄 Washed ashore!','#ffe44d');
+    setTimeout(dismountSurfboard, 400);
+  }
+
+  surfboard.x = nx;
+  surfboard.y = ny;
+
+  // Tilt angle based on vx
+  const targetAngle = (surfboard.vx / (SURF_SPEED_BASE + SURF_WAVE_BONUS)) * 0.35
+                    + Math.sin(surfboard.bobT*2.2)*0.04;
+  surfboard.angle += (targetAngle - surfboard.angle)*dt*6;
+
+  // Player follows board
+  player.x = surfboard.x;
+  player.y = surfboard.y - 15;
+  player.animT += dt;
+}
+
+// ── DRAW SURFBOARD ────────────────────────────────────────
+function drawSurfboard(){
+  if(!onScreen(surfboard.x, surfboard.y, 80)) return;
+  const [sx,sy] = w2s(surfboard.x, surfboard.y);
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(surfboard.angle);
+
+  // Wave boost glow
+  if(surfboard.waveBoost > 50){
+    const glow = ctx.createRadialGradient(0,0,10,0,0,60);
+    glow.addColorStop(0,`rgba(0,180,255,${surfboard.waveBoost/SURF_WAVE_BONUS*0.4})`);
+    glow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=glow;
+    ctx.beginPath();ctx.ellipse(0,0,60,25,0,0,Math.PI*2);ctx.fill();
+  }
+
+  // Board body — orange with detailed design
+  const grad=ctx.createLinearGradient(-42,0,42,0);
+  grad.addColorStop(0,'#ff4400');grad.addColorStop(0.4,'#ff8800');grad.addColorStop(1,'#ff5500');
+  ctx.fillStyle=grad;
+  ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=8;
+  ctx.beginPath();
+  ctx.moveTo(-42,0);
+  ctx.bezierCurveTo(-38,-14,38,-14,42,0);
+  ctx.bezierCurveTo(38,14,-38,14,-42,0);
+  ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;
+
+  // Board rails (side edges)
+  ctx.strokeStyle='#cc3300';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(-42,0);ctx.bezierCurveTo(-38,-14,38,-14,42,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-42,0);ctx.bezierCurveTo(-38,14,38,14,42,0);ctx.stroke();
+
+  // Deck design stripes
+  ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(-30,0);ctx.lineTo(30,0);ctx.stroke();
+  ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(-22,-5);ctx.lineTo(22,-5);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-22,5);ctx.lineTo(22,5);ctx.stroke();
+
+  // Fin underneath
+  ctx.fillStyle='#cc3300';
+  ctx.beginPath();ctx.moveTo(-28,6);ctx.lineTo(-34,22);ctx.lineTo(-20,8);ctx.closePath();ctx.fill();
+
+  // Nose point
+  ctx.fillStyle='#ff9900';
+  ctx.beginPath();ctx.ellipse(40,0,5,3,0,0,Math.PI*2);ctx.fill();
+
+  // Wax bumps on deck
+  ctx.fillStyle='rgba(255,255,255,.2)';
+  [[-10,0],[0,-3],[10,2],[-5,4],[8,-4]].forEach(([bx,by])=>{
+    ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);ctx.fill();
+  });
+
+  ctx.restore();
+
+  // Draw player on board if mounted
+  if(surfboard.mounted){
+    drawSurferOnBoard(sx, sy - 15);
+  }
+
+  // Spray particles when wave riding
+  if(surfboard.mounted && surfboard.waveBoost > 80){
+    const sprayX = surfboard.x - surfboard.vx*0.05;
+    burst(sprayX, surfboard.y+5,'#aaddff',2);
+  }
+}
+
+function drawSurferOnBoard(sx, sy){
+  ctx.save();ctx.translate(sx,sy);
+  ctx.rotate(surfboard.angle*0.5);
+  const s=player.r;
+  const lean=surfboard.angle*2; // lean into turn
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath();ctx.ellipse(0,s*.7,s*.45,s*.12,0,0,Math.PI*2);ctx.fill();
+
+  // Legs — wide stance
+  ctx.fillStyle='#1a1a1a';
+  ctx.fillRect(-s*.35,s*.2-lean*8,s*.22,s*.45);
+  ctx.fillRect(s*.1,s*.2+lean*8,s*.22,s*.45);
+
+  // Shoes
+  ctx.fillStyle='#c0c0c0';
+  ctx.beginPath();ctx.ellipse(-s*.25,s*.66-lean*8,s*.2,s*.09,lean*.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.22,s*.66+lean*8,s*.2,s*.09,-lean*.3,0,Math.PI*2);ctx.fill();
+
+  // Body — leaning into the wave
+  ctx.save();ctx.rotate(lean*0.3);
+  ctx.fillStyle='#eeeef0';
+  ctx.beginPath();ctx.roundRect(-s*.36,-s*.06,s*.72,s*.3,s*.1);ctx.fill();
+
+  // Arms out for balance
+  ctx.fillStyle='#eeeef0';
+  ctx.save();ctx.translate(-s*.36,s*.05);ctx.rotate(-0.6-lean*0.3);
+  ctx.fillRect(0,-s*.08,s*.3,s*.16);ctx.restore();
+  ctx.save();ctx.translate(s*.36,s*.05);ctx.rotate(0.6+lean*0.3);
+  ctx.fillRect(-s*.3,-s*.08,s*.3,s*.16);ctx.restore();
+
+  // Head
+  ctx.fillStyle='#f5c5a0';ctx.beginPath();ctx.ellipse(0,-s*.3,s*.28,s*.3,0,0,Math.PI*2);ctx.fill();
+  // Hair
+  ctx.fillStyle='#1c1108';
+  ctx.beginPath();ctx.moveTo(-s*.28,-s*.52);ctx.quadraticCurveTo(0,-s*.64,s*.28,-s*.52);
+  ctx.quadraticCurveTo(s*.3,-s*.38,s*.28,-s*.3);ctx.lineTo(-s*.28,-s*.3);
+  ctx.quadraticCurveTo(-s*.3,-s*.38,-s*.28,-s*.52);ctx.closePath();ctx.fill();
+  // Sunglasses 😎
+  ctx.fillStyle='rgba(0,0,0,.7)';
+  ctx.beginPath();ctx.ellipse(-s*.1,-s*.32,s*.1,s*.07,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(s*.1,-s*.32,s*.1,s*.07,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#111';ctx.lineWidth=s*.04;
+  ctx.beginPath();ctx.moveTo(-s*.22,-s*.32);ctx.lineTo(-s*.2,-s*.32);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(s*.0,-s*.32);ctx.lineTo(s*.02,-s*.32);ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+
+// ── WAVE CREST VISUAL (drawn in water, shows rideable band) ──
+function drawWaveCrestsWorld(){
+  if(!bigWave.active) return;
+  // Show big wave glow around board when nearby
+  if(surfboard.mounted){
+    const dist2=Math.abs(surfboard.y-bigWave.worldY);
+    if(dist2 < bigWave.width + 40){
+      const [sx,sy]=w2s(surfboard.x,surfboard.y);
+      const grd=ctx.createRadialGradient(sx,sy,10,sx,sy,90);
+      grd.addColorStop(0,'rgba(0,220,255,0.3)');
+      grd.addColorStop(1,'rgba(0,220,255,0)');
+      ctx.fillStyle=grd;ctx.beginPath();ctx.arc(sx,sy,90,0,Math.PI*2);ctx.fill();
+    }
+  }
+}
+
+// Hook into main loop
+const _baseLoop2=loop;
+loop=function(ts){
+  _baseLoop2(ts);
+  if(gstate==='playing'){
+    checkSurfProximity();
+  }
+};
+
+// Hook updateSurfboard into the update cycle
+const _origUpdateBigfoot2=updateBigfoot;
+updateBigfoot=function(dt){
+  _origUpdateBigfoot2(dt);
+  updateSurfboard(dt);
+};
+
+// Draw surfboard in world + wave highlights
+const _origDrawGround2=drawGround;
+drawGround=function(){
+  _origDrawGround2();
+  drawWaveCrestsWorld();
+};
+
+// Draw surfboard in Y-sorted chars
+// We do it after all chars by directly overriding the chars array builder
+const _origLoop3=loop;
+
+// Actually inject drawSurfboard into the render sequence
+// We patch the Y-sort to include surfboard
+const _buildChars=function(origFn){
+  return function(ts){
+    origFn(ts);
+  };
+};
+
+// Simpler: call drawSurfboard right after trees (which are already drawn last)
+// We override the tree draw call in the main loop
+const _origTreesDraw=trees.forEach;
+
+// Best approach: patch the loop's draw section by wrapping trees.forEach
+// We inject via the existing "trees.forEach(drawTree)" in main loop
+// Instead, let's just hook the post-chars draw
+
+// Inject surfboard draw before particles in loop
+const _loop_v2 = loop;
+const _surf_hooked = false;
+// The cleanest way: add to the Y-sort chars directly via a draw wrapper
+// We wrap drawBigfoot which is called last in chars, then draw surfboard
+const _origUpdateRanger2=updateRanger;
+updateRanger=function(dt){
+  _origUpdateRanger2(dt);
+  // Draw surfboard here (after all updates, during next draw pass)
+  // Actually we need it in draw, not update — use a flag
+};
+
+// Direct draw injection: after Y-sort chars + trees, draw surfboard
+// Find the particles draw section and prepend surfboard draw
+// We wrap the existing ctx.globalAlpha particle code
+// The most reliable: override drawBeach to also call drawSurfboard
+const _origDrawBeach=drawBeach;
+drawBeach=function(){
+  _origDrawBeach();
+  drawSurfboard();
+};
+
+// Key binding — Space bar on beach dismounts
+document.addEventListener('keydown',e=>{
+  if(e.key===' '&&surfboard.mounted){ e.preventDefault(); dismountSurfboard(); }
 });
 
 initMap();
